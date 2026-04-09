@@ -9,6 +9,7 @@ import (
 
 	"smart-pc-pc-service/internal/config"
 	mwLogger "smart-pc-pc-service/internal/http-server/middlewares/logger"
+	"smart-pc-pc-service/internal/lib/logger/sl"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -17,12 +18,12 @@ import (
 type Server struct {
 	HTTPServer *http.Server
 	log        *slog.Logger
-	cfg        *config.HTTPServer
+	cfg        config.HTTPServer
 
 	done chan struct{}
 }
 
-func New(log *slog.Logger, cfg *config.HTTPServer) *Server {
+func New(log *slog.Logger, cfg config.HTTPServer) *Server {
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
 	router.Use(mwLogger.New(log))
@@ -50,12 +51,15 @@ func (s *Server) Done() <-chan struct{} {
 
 func (s *Server) Run(ctx context.Context) error {
 	const op = "http-server.Run"
+	log := s.log.With(sl.Op(op))
 
 	defer close(s.done)
 
+	log.Info("starting http server", slog.String("address", s.HTTPServer.Addr))
 	errorChan := make(chan error, 1)
 	go func() {
 		if err := s.start(); err != nil {
+			log.Error("failed to start http server", sl.Err(err))
 			errorChan <- err
 			return
 		}
@@ -68,9 +72,12 @@ func (s *Server) Run(ctx context.Context) error {
 		stopCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ShutdownTimeout)
 		defer cancel()
 
+		log.Info("shutting down http server")
 		if err := s.stop(stopCtx); err != nil {
+			log.Error("failed to stop http server", sl.Err(err))
 			return fmt.Errorf("%s: error stopping http server: %w", op, err)
 		}
+		log.Info("http server stopped")
 	}
 
 	return nil
