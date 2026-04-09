@@ -1,0 +1,12 @@
+version: "2"
+
+sql:
+    - engine: "postgresql"
+      queries: "./data/queries/postgres"
+      schema: "./data/migrations/postgres"
+      gen:
+          go:
+              package: "dbqueries"
+              out: "./internal/storage/postgres/dbqueries"
+              emit_params_struct_pointers: true
+              emit_result_struct_pointers: true

@@ -1,2 +1,4 @@
 /data/config/
 /.idea
+**/*.env
+/internal/storage/postgres/dbqueries/
