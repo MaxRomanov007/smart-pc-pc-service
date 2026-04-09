@@ -8,6 +8,8 @@ import (
 	"net/http"
 
 	"smart-pc-pc-service/internal/config"
+	getPcs "smart-pc-pc-service/internal/http-server/handlers/pcs/get-pcs"
+	"smart-pc-pc-service/internal/http-server/middlewares/auth"
 	mwLogger "smart-pc-pc-service/internal/http-server/middlewares/logger"
 	"smart-pc-pc-service/internal/lib/logger/sl"
 
@@ -23,11 +25,13 @@ type Server struct {
 	done chan struct{}
 }
 
-func New(log *slog.Logger, cfg config.HTTPServer) *Server {
+func New(log *slog.Logger, cfg config.HTTPServer, pcsGetter getPcs.PcGetter) *Server {
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
 	router.Use(mwLogger.New(log))
 	router.Use(middleware.Recoverer)
+
+	router.With(auth.New(log)).Get("/pcs", getPcs.New(log, pcsGetter))
 
 	srv := &http.Server{
 		Addr:         cfg.Address,

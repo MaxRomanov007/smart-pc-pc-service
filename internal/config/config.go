@@ -16,6 +16,7 @@ import (
 type Config struct {
 	Env        string     `yaml:"env"         validate:"required,oneof=dev debug production" env-default:"production"`
 	HTTPServer HTTPServer `yaml:"http_server"`
+	Storage    Storage    `yaml:"storage"`
 }
 
 type HTTPServer struct {
@@ -23,6 +24,10 @@ type HTTPServer struct {
 	Timeout         time.Duration `yaml:"timeout"          env-default:"4s"`
 	IdleTimeout     time.Duration `yaml:"idle_timeout"     env-default:"60s"`
 	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" env-default:"1s"`
+}
+
+type Storage struct {
+	Postgres PostgresStorage `yaml:"postgres"`
 }
 
 func MustLoad() *Config {
@@ -67,6 +72,15 @@ func validationErrorMessages(errs validator.ValidationErrors) string {
 			errMsgs = append(
 				errMsgs,
 				fmt.Sprintf("field %q must be one of %q", err.StructNamespace(), err.Param()),
+			)
+		case "gte":
+			errMsgs = append(
+				errMsgs,
+				fmt.Sprintf(
+					"field %q must be greater or equal to %s",
+					err.StructNamespace(),
+					err.Param(),
+				),
 			)
 		default:
 			errMsgs = append(

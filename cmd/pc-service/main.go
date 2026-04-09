@@ -10,6 +10,7 @@ import (
 	httpServer "smart-pc-pc-service/internal/http-server"
 	"smart-pc-pc-service/internal/lib/logger"
 	"smart-pc-pc-service/internal/lib/logger/sl"
+	"smart-pc-pc-service/internal/storage/postgres"
 )
 
 func main() {
@@ -20,7 +21,13 @@ func main() {
 
 	log.Debug("debug messages enabled")
 
-	srv := httpServer.New(log, cfg.HTTPServer)
+	storage, err := postgres.New(ctx, cfg.Storage.Postgres)
+	if err != nil {
+		log.Error("failed to create postgres storage", sl.Err(err))
+		os.Exit(1)
+	}
+
+	srv := httpServer.New(log, cfg.HTTPServer, storage)
 	go func() {
 		if err := srv.Run(ctx); err != nil {
 			log.Error("http server error", sl.Err(err))

@@ -25,7 +25,7 @@ func New(log *slog.Logger, requiredScopes ...string) func(next http.Handler) htt
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			const op = "middlewares.auth"
 
-			log := log.With(sl.Op(op))
+			log := log.With(sl.Op(op), sl.ReqId(r))
 
 			userInfoHeader := r.Header.Get("X-Userinfo")
 			if userInfoHeader == "" {
