@@ -7,14 +7,15 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"smart-pc-pc-service/internal/config"
+	getPc "smart-pc-pc-service/internal/http-server/handlers/pcs/get-pc"
 	getPcs "smart-pc-pc-service/internal/http-server/handlers/pcs/get-pcs"
+	updatePc "smart-pc-pc-service/internal/http-server/handlers/pcs/update-pc"
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
 	mwLogger "smart-pc-pc-service/internal/http-server/middlewares/logger"
 	"smart-pc-pc-service/internal/lib/logger/sl"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 type Server struct {
@@ -25,17 +26,32 @@ type Server struct {
 	done chan struct{}
 }
 
-func New(log *slog.Logger, cfg config.HTTPServer, pcsGetter getPcs.PcGetter) *Server {
-	router := chi.NewRouter()
-	router.Use(middleware.RequestID)
-	router.Use(mwLogger.New(log))
-	router.Use(middleware.Recoverer)
+func New(
+	log *slog.Logger,
+	cfg config.HTTPServer,
+	pcsGetter getPcs.PcGetter,
+	pcGetter getPc.PcGetter,
+	updater updatePc.PcUpdater,
+) *Server {
+	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+	r.Use(mwLogger.New(log))
+	r.Use(middleware.Recoverer)
 
-	router.With(auth.New(log)).Get("/pcs", getPcs.New(log, pcsGetter))
+	r.Route("/u/{uid}/pcs", func(r chi.Router) {
+		r.Use(auth.NewAuthMiddleware(log))
+		r.Use(auth.NewUserIdVerifierMiddleware(log))
+
+		r.Get("/", getPcs.New(log, pcsGetter))
+		r.Route("/{pc_id}", func(r chi.Router) {
+			r.Get("/", getPc.New(log, pcGetter))
+			r.Patch("/", updatePc.New(log, updater))
+		})
+	})
 
 	srv := &http.Server{
 		Addr:         cfg.Address,
-		Handler:      router,
+		Handler:      r,
 		ReadTimeout:  cfg.Timeout,
 		WriteTimeout: cfg.Timeout,
 		IdleTimeout:  cfg.IdleTimeout,

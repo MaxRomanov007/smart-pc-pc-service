@@ -17,6 +17,7 @@ type Config struct {
 	Env        string     `yaml:"env"         validate:"required,oneof=dev debug production" env-default:"production"`
 	HTTPServer HTTPServer `yaml:"http_server"`
 	Storage    Storage    `yaml:"storage"`
+	Slug       Slug       `yaml:"slug"`
 }
 
 type HTTPServer struct {
@@ -28,6 +29,10 @@ type HTTPServer struct {
 
 type Storage struct {
 	Postgres PostgresStorage `yaml:"postgres"`
+}
+
+type Slug struct {
+	Retries uint `yaml:"retries" env-default:"5"`
 }
 
 func MustLoad() *Config {

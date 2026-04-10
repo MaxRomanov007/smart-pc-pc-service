@@ -1,90 +1,86 @@
--- name: GetLogsByPCID :many
-SELECT
-    cl.id,
-    cl.command_id,
-    c.name AS command_name,
-    cl.received_at,
-    cl.completed_at,
-    cl.status,
-    cl.error
+-- name: ListPCLogs :many
+SELECT cl.id,
+       cl.command_id,
+       c.name AS command_name,
+       cl.received_at,
+       cl.completed_at,
+       cl.status,
+       cl.error
 FROM command_logs cl
          JOIN commands c ON c.id = cl.command_id
-WHERE c.pc_id = $1
-ORDER BY
-    CASE WHEN sqlc.arg('order')::text = 'asc'  THEN cl.received_at END ASC,
-    CASE WHEN sqlc.arg('order')::text = 'desc' THEN cl.received_at END DESC;
+         JOIN pcs p ON p.id = c.pc_id
+WHERE p.user_id = @user_id
+  AND c.pc_id = @pc_id
+ORDER BY CASE WHEN sqlc.arg('order')::text = 'asc' THEN cl.id END ASC,
+         CASE WHEN sqlc.arg('order')::text = 'desc' THEN cl.id END DESC;
 
--- name: GetLogsByPCIDFirstPage :many
-SELECT
-    cl.id,
-    cl.command_id,
-    c.name AS command_name,
-    cl.received_at,
-    cl.completed_at,
-    cl.status,
-    cl.error
+-- name: ListPCLogsFirstPage :many
+SELECT cl.id,
+       cl.command_id,
+       c.name AS command_name,
+       cl.received_at,
+       cl.completed_at,
+       cl.status,
+       cl.error
 FROM command_logs cl
          JOIN commands c ON c.id = cl.command_id
-WHERE c.pc_id = sqlc.arg('pc_id')
-ORDER BY
-    CASE WHEN sqlc.arg('order')::text = 'asc'  THEN cl.received_at END ASC,
-    CASE WHEN sqlc.arg('order')::text = 'desc' THEN cl.received_at END DESC
+         JOIN pcs p ON p.id = c.pc_id
+WHERE p.user_id = @user_id
+  AND c.pc_id = @pc_id
+ORDER BY CASE WHEN sqlc.arg('order')::text = 'asc' THEN cl.id END ASC,
+         CASE WHEN sqlc.arg('order')::text = 'desc' THEN cl.id END DESC
 LIMIT sqlc.arg('limit');
 
--- name: GetLogsByPCIDAfterCursor :many
-SELECT
-    cl.id,
-    cl.command_id,
-    c.name AS command_name,
-    cl.received_at,
-    cl.completed_at,
-    cl.status,
-    cl.error
+-- name: ListPCLogsAfterCursor :many
+SELECT cl.id,
+       cl.command_id,
+       c.name AS command_name,
+       cl.received_at,
+       cl.completed_at,
+       cl.status,
+       cl.error
 FROM command_logs cl
          JOIN commands c ON c.id = cl.command_id
-WHERE c.pc_id = sqlc.arg('pc_id')
+         JOIN pcs p ON p.id = c.pc_id
+WHERE p.user_id = @user_id
+  AND c.pc_id = @pc_id
   AND (
     CASE
-        WHEN sqlc.arg('order')::text = 'asc'  THEN cl.received_at > (SELECT received_at FROM command_logs WHERE id = sqlc.arg('cursor')::uuid)
-        WHEN sqlc.arg('order')::text = 'desc' THEN cl.received_at < (SELECT received_at FROM command_logs WHERE id = sqlc.arg('cursor')::uuid)
+        WHEN sqlc.arg('order')::text = 'asc' THEN cl.id > sqlc.arg('cursor')::uuid
+        WHEN sqlc.arg('order')::text = 'desc' THEN cl.id < sqlc.arg('cursor')::uuid
         END
     )
-ORDER BY
-    CASE WHEN sqlc.arg('order')::text = 'asc'  THEN cl.received_at END ASC,
-    CASE WHEN sqlc.arg('order')::text = 'desc' THEN cl.received_at END DESC
+ORDER BY CASE WHEN sqlc.arg('order')::text = 'asc' THEN cl.id END ASC,
+         CASE WHEN sqlc.arg('order')::text = 'desc' THEN cl.id END DESC
 LIMIT sqlc.arg('limit');
 
--- name: GetLogsByPCIDBeforeCursor :many
-SELECT *
-FROM (
-         SELECT
-             cl.id,
-             cl.command_id,
-             c.name AS command_name,
-             cl.received_at,
-             cl.completed_at,
-             cl.status,
-             cl.error
-         FROM command_logs cl
-                  JOIN commands c ON c.id = cl.command_id
-         WHERE c.pc_id = sqlc.arg('pc_id')
-           AND (
-             CASE
-                 WHEN sqlc.arg('order')::text = 'asc'  THEN cl.received_at < (SELECT received_at FROM command_logs WHERE id = sqlc.arg('cursor')::uuid)
-                 WHEN sqlc.arg('order')::text = 'desc' THEN cl.received_at > (SELECT received_at FROM command_logs WHERE id = sqlc.arg('cursor')::uuid)
-                 END
-             )
-         ORDER BY
-             CASE WHEN sqlc.arg('order')::text = 'asc'  THEN cl.received_at END DESC,
-             CASE WHEN sqlc.arg('order')::text = 'desc' THEN cl.received_at END ASC
-         LIMIT sqlc.arg('limit')
-     ) sub
-ORDER BY
-    CASE WHEN sqlc.arg('order')::text = 'asc'  THEN sub.received_at END ASC,
-    CASE WHEN sqlc.arg('order')::text = 'desc' THEN sub.received_at END DESC;
+-- name: ListPCLogsBeforeCursor :many
+SELECT cl.id,
+       cl.command_id,
+       c.name AS command_name,
+       cl.received_at,
+       cl.completed_at,
+       cl.status,
+       cl.error
+FROM command_logs cl
+         JOIN commands c ON c.id = cl.command_id
+         JOIN pcs p ON p.id = c.pc_id
+WHERE p.user_id = @user_id
+  AND c.pc_id = @pc_id
+  AND (
+    CASE
+        WHEN sqlc.arg('order')::text = 'asc' THEN cl.id < sqlc.arg('cursor')::uuid
+        WHEN sqlc.arg('order')::text = 'desc' THEN cl.id > sqlc.arg('cursor')::uuid
+        END
+    )
+ORDER BY CASE WHEN sqlc.arg('order')::text = 'asc' THEN cl.id END DESC,
+         CASE WHEN sqlc.arg('order')::text = 'desc' THEN cl.id END ASC
+LIMIT sqlc.arg('limit');
 
--- name: CountLogsByPCID :one
+-- name: CountPCLogs :one
 SELECT COUNT(*)
 FROM command_logs cl
          JOIN commands c ON c.id = cl.command_id
-WHERE c.pc_id = $1;
+         JOIN pcs p ON p.id = c.pc_id
+WHERE p.user_id = @user_id
+  AND c.pc_id = @pc_id;

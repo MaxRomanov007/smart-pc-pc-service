@@ -21,13 +21,13 @@ func main() {
 
 	log.Debug("debug messages enabled")
 
-	storage, err := postgres.New(ctx, cfg.Storage.Postgres)
+	storage, err := postgres.New(ctx, cfg.Storage.Postgres, cfg.Slug)
 	if err != nil {
 		log.Error("failed to create postgres storage", sl.Err(err))
 		os.Exit(1)
 	}
 
-	srv := httpServer.New(log, cfg.HTTPServer, storage)
+	srv := httpServer.New(log, cfg.HTTPServer, storage.Pcs, storage.Pcs, storage.Pcs)
 	go func() {
 		if err := srv.Run(ctx); err != nil {
 			log.Error("http server error", sl.Err(err))

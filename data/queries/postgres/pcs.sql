@@ -1,24 +1,26 @@
--- name: GetPCsByUserID :many
+-- name: ListUserPCs :many
 SELECT id, user_id, slug, name, description, can_power_on
 FROM pcs
-WHERE user_id = $1;
+WHERE user_id = @user_id;
 
--- name: GetPCBySlug :one
+-- name: GetUserPCBySlug :one
 SELECT id, user_id, slug, name, description, can_power_on
 FROM pcs
-WHERE user_id = $1 AND slug = $2;
+WHERE user_id = @user_id
+  AND slug = @slug;
 
--- name: GetPCByID :one
+-- name: GetUserPCByID :one
 SELECT id, user_id, slug, name, description, can_power_on
 FROM pcs
-WHERE id = $1 AND user_id = $2;
+WHERE user_id = @user_id
+  AND id = @id;
 
--- name: UpdatePC :one
+-- name: UpdateUserPC :one
 UPDATE pcs
-SET
-    name        = COALESCE(sqlc.narg('name'), name),
-    slug        = COALESCE(sqlc.narg('slug'), slug),
-    description = COALESCE(sqlc.narg('description'), description),
+SET name         = COALESCE(sqlc.narg('name'), name),
+    slug         = COALESCE(sqlc.narg('slug'), slug),
+    description  = COALESCE(sqlc.narg('description'), description),
     can_power_on = COALESCE(sqlc.narg('can_power_on'), can_power_on)
-WHERE id = sqlc.arg('id') AND user_id = sqlc.arg('user_id')
+WHERE user_id = @user_id
+  AND id = @id
 RETURNING *;

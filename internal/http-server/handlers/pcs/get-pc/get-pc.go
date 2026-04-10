@@ -1,4 +1,4 @@
-package updatePc
+package getPc
 
 import (
 	"context"
@@ -17,24 +17,13 @@ import (
 	"github.com/google/uuid"
 )
 
-type PcUpdater interface {
-	UpdatePc(
-		ctx context.Context,
-		userID, pcID uuid.UUID,
-		name, description *string,
-		canPowerOn *bool,
-	) (models.Pc, error)
+type PcGetter interface {
+	PcByID(ctx context.Context, userID, pcID uuid.UUID) (models.Pc, error)
 }
 
-type Request struct {
-	Name        *string `json:"name"`
-	Description *string `json:"description"`
-	CanPowerOn  *bool   `json:"canPowerOn"`
-}
-
-func New(log *slog.Logger, updater PcUpdater) http.HandlerFunc {
+func New(log *slog.Logger, getter PcGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "http-server.handlers.pcs.update-pc"
+		const op = "http-server.handlers.pcs.get-pc"
 
 		log := log.With(sl.Op(op), sl.ReqId(r))
 
@@ -49,33 +38,19 @@ func New(log *slog.Logger, updater PcUpdater) http.HandlerFunc {
 
 		log.Debug("got pc id", slog.String("pc_id", pcID.String()))
 
-		var req Request
-		if err := render.DecodeJSON(r.Body, &req); err != nil {
-			log.Error("failed to decode request body", sl.Err(err))
-			render.JSON(w, r, response.BadRequest("failed to decode request"))
-			return
-		}
-
-		pc, err := updater.UpdatePc(
-			r.Context(),
-			userID,
-			pcID,
-			req.Name,
-			req.Description,
-			req.CanPowerOn,
-		)
+		pc, err := getter.PcByID(r.Context(), userID, pcID)
 		if errors.Is(err, storage.ErrNotFound) {
 			log.Warn("pc not found")
 			render.JSON(w, r, response.NotFound("pc not found"))
 			return
 		}
 		if err != nil {
-			log.Error("failed to update pc", sl.Err(err))
+			log.Error("failed to get pc", sl.Err(err))
 			render.JSON(w, r, response.InternalError())
 			return
 		}
 
-		log.Debug("pc updated successfully", slog.Any("pc", pc))
+		log.Debug("got pc", slog.Any("pc", pc))
 		render.JSON(w, r, response.OK(&pc))
 		return
 	}

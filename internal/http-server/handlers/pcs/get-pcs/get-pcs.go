@@ -6,18 +6,18 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/go-chi/render"
+	"github.com/google/uuid"
 	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
 	"smart-pc-pc-service/internal/lib/api/response"
 	"smart-pc-pc-service/internal/lib/logger/sl"
 	"smart-pc-pc-service/internal/storage"
-
-	"github.com/go-chi/render"
 )
 
 type PcGetter interface {
-	PcsByUserID(ctx context.Context, userID string) ([]models.Pc, error)
-	PcBySlug(ctx context.Context, userID string, slug string) (models.Pc, error)
+	PcsByUserID(ctx context.Context, userID uuid.UUID) ([]models.Pc, error)
+	PcBySlug(ctx context.Context, userID uuid.UUID, slug string) (models.Pc, error)
 }
 
 func New(log *slog.Logger, getter PcGetter) http.HandlerFunc {
@@ -26,7 +26,7 @@ func New(log *slog.Logger, getter PcGetter) http.HandlerFunc {
 
 		log := log.With(sl.Op(op), sl.ReqId(r))
 
-		userID, _ := auth.GetUserInfo(r)
+		userID := auth.GetUserUUID(r)
 
 		if slug := r.URL.Query().Get("slug"); slug != "" {
 			log.Info("got slug", slog.String("slug", slug))
