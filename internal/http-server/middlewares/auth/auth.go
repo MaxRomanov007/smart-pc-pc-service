@@ -30,7 +30,7 @@ func NewAuthMiddleware(
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			const op = "middlewares.auth"
 
-			log := log.With(sl.Op(op), sl.ReqId(r))
+			log := log.With(sl.Op(op), sl.ReqID(r))
 
 			userInfoHeader := r.Header.Get("X-Userinfo")
 			if userInfoHeader == "" {

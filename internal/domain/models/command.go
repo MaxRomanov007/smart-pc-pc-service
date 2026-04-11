@@ -10,5 +10,5 @@ type Command struct {
 
 	Pc         *Pc                `json:"pc,omitempty"`
 	Parameters []CommandParameter `json:"parameters,omitempty"`
-	Logs       []CommandLog       `json:"logs,omitempty"`
+	Logs       []PcLog            `json:"logs,omitempty"`
 }

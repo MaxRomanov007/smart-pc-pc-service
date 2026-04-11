@@ -4,11 +4,13 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/eclipse/paho.golang/paho"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
-	RequestIdLogKey = "request_id"
+	RequestIDLogKey = "request_id"
+	PublishIDLogKey = "publish_id"
 	OpLogKey        = "operation"
 	ErrorLogKey     = "error"
 )
@@ -27,11 +29,18 @@ func Op(op string) slog.Attr {
 	}
 }
 
-func ReqId(r *http.Request) slog.Attr {
+func ReqID(r *http.Request) slog.Attr {
 	reqId := middleware.GetReqID(r.Context())
 
 	return slog.Attr{
-		Key:   RequestIdLogKey,
+		Key:   RequestIDLogKey,
 		Value: slog.StringValue(reqId),
+	}
+}
+
+func PubID(p *paho.Publish) slog.Attr {
+	return slog.Attr{
+		Key:   PublishIDLogKey,
+		Value: slog.IntValue(int(p.PacketID)),
 	}
 }

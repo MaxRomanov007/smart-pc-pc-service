@@ -6,13 +6,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type CommandLog struct {
+type PcLog struct {
 	ID          uuid.UUID `json:"id"`
-	CommandID   uuid.UUID `json:"commandId"`
+	PcID        uuid.UUID `json:"pcId"`
+	CommandID   string    `json:"commandId"`
+	CommandName *string   `json:"commandName,omitempty"`
 	ReceivedAt  time.Time `json:"receivedAt"`
 	CompletedAt time.Time `json:"completedAt"`
 	Status      string    `json:"status"`
 	Error       *string   `json:"error,omitempty"`
 
-	Command *Command `json:"command,omitempty"`
+	Pc *Pc `json:"pc,omitempty"`
 }

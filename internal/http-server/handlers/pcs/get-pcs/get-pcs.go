@@ -6,13 +6,14 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/go-chi/render"
-	"github.com/google/uuid"
 	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
 	"smart-pc-pc-service/internal/lib/api/response"
 	"smart-pc-pc-service/internal/lib/logger/sl"
 	"smart-pc-pc-service/internal/storage"
+
+	"github.com/go-chi/render"
+	"github.com/google/uuid"
 )
 
 type PcGetter interface {
@@ -24,7 +25,7 @@ func New(log *slog.Logger, getter PcGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "http-server.handlers.pcs.get-pcs"
 
-		log := log.With(sl.Op(op), sl.ReqId(r))
+		log := log.With(sl.Op(op), sl.ReqID(r))
 
 		userID := auth.GetUserUUID(r)
 

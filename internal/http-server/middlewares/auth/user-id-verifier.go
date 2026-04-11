@@ -17,7 +17,7 @@ func NewUserIdVerifierMiddleware(log *slog.Logger) func(next http.Handler) http.
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			const op = "middlewares.user-id-verifier"
 
-			log := log.With(sl.Op(op), sl.ReqId(r))
+			log := log.With(sl.Op(op), sl.ReqID(r))
 
 			userID, _ := GetUserInfo(r)
 

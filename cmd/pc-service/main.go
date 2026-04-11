@@ -10,6 +10,7 @@ import (
 	httpServer "smart-pc-pc-service/internal/http-server"
 	"smart-pc-pc-service/internal/lib/logger"
 	"smart-pc-pc-service/internal/lib/logger/sl"
+	"smart-pc-pc-service/internal/mqtt"
 	"smart-pc-pc-service/internal/storage/postgres"
 )
 
@@ -35,6 +36,19 @@ func main() {
 		}
 	}()
 
+	conn, err := mqtt.New(log, cfg.MQTT)
+	if err != nil {
+		log.Error("failed to create mqtt connection", sl.Err(err))
+		os.Exit(1)
+	}
+	go func() {
+		if err := conn.Run(ctx); err != nil {
+			log.Error("mqtt connection error", sl.Err(err))
+			os.Exit(1)
+		}
+	}()
+
 	<-ctx.Done()
 	<-srv.Done()
+	<-conn.Done()
 }

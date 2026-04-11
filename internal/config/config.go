@@ -18,6 +18,7 @@ type Config struct {
 	HTTPServer HTTPServer `yaml:"http_server"`
 	Storage    Storage    `yaml:"storage"`
 	Slug       Slug       `yaml:"slug"`
+	MQTT       MQTT       `yaml:"mqtt"`
 }
 
 type HTTPServer struct {
@@ -33,6 +34,14 @@ type Storage struct {
 
 type Slug struct {
 	Retries uint `yaml:"retries" env-default:"5"`
+}
+
+type MQTT struct {
+	URL                   string        `yaml:"url"                     env-default:"mqtt://localhost:1883"`
+	KeepAlive             uint16        `yaml:"keep_alive"              env-default:"20"`
+	SessionExpiryInterval uint32        `yaml:"session_expiry_interval" env-default:"60"`
+	ClientID              string        `yaml:"client_id"               env-default:"smart-pc-pc-service"`
+	ReconnectInterval     time.Duration `yaml:"reconnect_interval"      env-default:"1s"`
 }
 
 func MustLoad() *Config {
