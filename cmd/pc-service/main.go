@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"smart-pc-pc-service/internal/lib/sync/waitable"
 	"syscall"
 
 	"smart-pc-pc-service/internal/config"
@@ -22,7 +23,7 @@ func main() {
 
 	log.Debug("debug messages enabled")
 
-	storage, err := postgres.New(ctx, cfg.Storage.Postgres, cfg.Slug)
+	storage, err := postgres.New(ctx, log, *cfg)
 	if err != nil {
 		log.Error("failed to create postgres storage", sl.Err(err))
 		os.Exit(1)
@@ -36,19 +37,11 @@ func main() {
 		}
 	}()
 
-	conn, err := mqtt.New(log, cfg.MQTT)
+	conn, err := mqtt.New(ctx, log, cfg.MQTT, storage.PcLogs)
 	if err != nil {
 		log.Error("failed to create mqtt connection", sl.Err(err))
 		os.Exit(1)
 	}
-	go func() {
-		if err := conn.Run(ctx); err != nil {
-			log.Error("mqtt connection error", sl.Err(err))
-			os.Exit(1)
-		}
-	}()
 
-	<-ctx.Done()
-	<-srv.Done()
-	<-conn.Done()
+	<-waitable.WaitAll(storage, srv, conn)
 }

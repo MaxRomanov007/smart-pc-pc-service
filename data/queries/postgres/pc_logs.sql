@@ -76,10 +76,9 @@ INSERT INTO pc_logs (pc_id,
                      completed_at,
                      status,
                      error)
-SELECT pc_id,
-       command_id,
-       received_at,
-       completed_at,
-       status,
-       error
-FROM UNNEST(@pc_ids::uuid[]), UNNEST(@command_ids::varchar[]), UNNEST(@received_ats::timestamptz[]), UNNEST(@completed_ats::timestamptz[]), UNNEST(@statuses::varchar[]), UNNEST(@errors::varchar[]);
+SELECT UNNEST(@pc_ids::uuid[]),
+       UNNEST(@command_ids::varchar[]),
+       UNNEST(@received_ats::timestamptz[]),
+       UNNEST(@completed_ats::timestamptz[]),
+       UNNEST(@statuses::varchar[]),
+       UNNEST(@errors::varchar[]);

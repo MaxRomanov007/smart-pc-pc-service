@@ -19,6 +19,7 @@ type Config struct {
 	Storage    Storage    `yaml:"storage"`
 	Slug       Slug       `yaml:"slug"`
 	MQTT       MQTT       `yaml:"mqtt"`
+	Batch      Batch      `yaml:"batch"`
 }
 
 type HTTPServer struct {
@@ -42,6 +43,11 @@ type MQTT struct {
 	SessionExpiryInterval uint32        `yaml:"session_expiry_interval" env-default:"60"`
 	ClientID              string        `yaml:"client_id"               env-default:"smart-pc-pc-service"`
 	ReconnectInterval     time.Duration `yaml:"reconnect_interval"      env-default:"1s"`
+}
+
+type Batch struct {
+	MaxSize int           `yaml:"max_size" env-default:"50"`
+	Timeout time.Duration `yaml:"timeout"  env-default:"1s"`
 }
 
 func MustLoad() *Config {

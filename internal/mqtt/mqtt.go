@@ -16,13 +16,16 @@ import (
 )
 
 type Connection struct {
-	clientConfig autopaho.ClientConfig
-	router       *topicRouter.TopicRouter
-	log          *slog.Logger
-	cm           *autopaho.ConnectionManager
+	cm  *autopaho.ConnectionManager
+	log *slog.Logger
 }
 
-func New(log *slog.Logger, cfg config.MQTT) (*Connection, error) {
+func New(
+	ctx context.Context,
+	log *slog.Logger,
+	cfg config.MQTT,
+	pcLogCreator pcLogs.PcLogCreator,
+) (*Connection, error) {
 	const op = "mqtt.New"
 
 	u, err := url.Parse(cfg.URL)
@@ -31,7 +34,7 @@ func New(log *slog.Logger, cfg config.MQTT) (*Connection, error) {
 	}
 
 	router := topicRouter.NewTopicRouter()
-	router.RegisterHandler("users/+/pcs/+/log", pcLogs.New(log))
+	router.RegisterHandler("users/+/pcs/+/log", pcLogs.New(ctx, log, pcLogCreator))
 
 	cliCfg := autopaho.ClientConfig{
 		ServerUrls:                    []*url.URL{u},
@@ -41,6 +44,14 @@ func New(log *slog.Logger, cfg config.MQTT) (*Connection, error) {
 		ReconnectBackoff:              autopaho.NewConstantBackoff(cfg.ReconnectInterval),
 		OnConnectionUp: func(cm *autopaho.ConnectionManager, connAck *paho.Connack) {
 			log.Info("mqtt connection up")
+
+			subs := make([]paho.SubscribeOptions, 0)
+			for _, topic := range router.Topics() {
+				subs = append(subs, paho.SubscribeOptions{Topic: topic, QoS: 1})
+			}
+			if _, err := cm.Subscribe(ctx, &paho.Subscribe{Subscriptions: subs}); err != nil {
+				log.Error("failed to subscribe to topics", sl.Err(err))
+			}
 		},
 		OnConnectError: func(err error) {
 			log.Error("failed to connect to mqtt server", sl.Err(err))
@@ -57,42 +68,12 @@ func New(log *slog.Logger, cfg config.MQTT) (*Connection, error) {
 		},
 	}
 
-	return &Connection{clientConfig: cliCfg, router: router, log: log}, nil
-}
-
-func (c *Connection) Run(ctx context.Context) error {
-	const op = "mqtt.Run"
-
-	cm, err := autopaho.NewConnection(ctx, c.clientConfig)
+	cm, err := autopaho.NewConnection(ctx, cliCfg)
 	if err != nil {
-		return fmt.Errorf("%s: failed to create connection: %w", op, err)
-	}
-	c.cm = cm
-
-	if err := cm.AwaitConnection(ctx); err != nil {
-		return fmt.Errorf("%s: failed to await connection: %w", op, err)
+		return nil, fmt.Errorf("%s: failed to create connection: %w", op, err)
 	}
 
-	subs := make([]paho.SubscribeOptions, 0)
-	for _, topic := range c.router.Topics() {
-		subs = append(subs, paho.SubscribeOptions{Topic: topic, QoS: 1})
-	}
-	sa, err := cm.Subscribe(ctx, &paho.Subscribe{Subscriptions: subs})
-	if err != nil {
-		if sa != nil {
-			return fmt.Errorf(
-				"%s: failed to subscribe to topics (reason %v): %w",
-				op,
-				sa.Reasons,
-				err,
-			)
-		}
-		return fmt.Errorf("%s: failed to subscribe to topics: %w", op, err)
-	}
-
-	<-cm.Done()
-	c.log.Info("mqtt connection done")
-	return nil
+	return &Connection{cm: cm, log: log}, nil
 }
 
 func (c *Connection) Done() <-chan struct{} {

@@ -1,6 +1,7 @@
 package pcLogs
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"smart-pc-pc-service/internal/domain/models"
@@ -23,10 +24,10 @@ type Message struct {
 }
 
 type PcLogCreator interface {
-	CreatePcLog(models.PcLog) error
+	CreatePcLog(context.Context, models.PcLog) error
 }
 
-func New(log *slog.Logger, creator PcLogCreator) paho.MessageHandler {
+func New(ctx context.Context, log *slog.Logger, creator PcLogCreator) paho.MessageHandler {
 	return func(p *paho.Publish) {
 		const op = "mqtt.handlers.pc-logs"
 
@@ -46,7 +47,7 @@ func New(log *slog.Logger, creator PcLogCreator) paho.MessageHandler {
 		}
 		log.Debug("got pcID", slog.String("pcID", pcID.String()))
 
-		if err := creator.CreatePcLog(models.PcLog{
+		if err := creator.CreatePcLog(ctx, models.PcLog{
 			PcID:        pcID,
 			CommandID:   payload.Data.Command,
 			ReceivedAt:  payload.Data.ReceivedAt,

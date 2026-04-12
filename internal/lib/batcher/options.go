@@ -2,11 +2,14 @@ package batcher
 
 import "time"
 
+type FlushFunc[T any] func([]T) error
+type OnFlushErrorFunc func(error)
+
 type Options[T any] struct {
-	Flush        func([]T) error
+	Flush        FlushFunc[T]
 	MaxSize      int
 	Timeout      time.Duration
-	OnFlushError func(error)
+	OnFlushError OnFlushErrorFunc
 }
 
 func (o *Options[T]) fill() {
