@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	getPcLogs "smart-pc-pc-service/internal/http-server/handlers/pcs/id/logs/get-pc-logs"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"smart-pc-pc-service/internal/config"
 	getPcs "smart-pc-pc-service/internal/http-server/handlers/pcs/get-pcs"
 	getPc "smart-pc-pc-service/internal/http-server/handlers/pcs/id/get-pc"
@@ -16,6 +15,9 @@ import (
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
 	mwLogger "smart-pc-pc-service/internal/http-server/middlewares/logger"
 	"smart-pc-pc-service/internal/lib/logger/sl"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 type Server struct {
@@ -32,6 +34,7 @@ func New(
 	pcsGetter getPcs.PcGetter,
 	pcGetter getPc.PcGetter,
 	updater updatePc.PcUpdater,
+	pcLogsGetter getPcLogs.PcLogsGetter,
 ) *Server {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -46,6 +49,10 @@ func New(
 		r.Route("/{pc_id}", func(r chi.Router) {
 			r.Get("/", getPc.New(log, pcGetter))
 			r.Patch("/", updatePc.New(log, updater))
+
+			r.Route("/logs", func(r chi.Router) {
+				r.Get("/", getPcLogs.New(log, pcLogsGetter))
+			})
 		})
 	})
 

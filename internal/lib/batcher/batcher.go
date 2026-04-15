@@ -16,6 +16,7 @@ func New[T any](ctx context.Context, opts *Options[T]) *Batcher[T] {
 	opts.fill()
 	b := &Batcher[T]{
 		input: make(chan T, opts.MaxSize*2),
+		done:  make(chan struct{}),
 		opts:  opts,
 	}
 
