@@ -26,7 +26,7 @@ func NewPcIDVerifierMiddleware(log *slog.Logger) func(next http.Handler) http.Ha
 				return
 			}
 
-			log.Debug("pc id parsed", slog.String("pc_id", pcID.String()))
+			log.Debug("pc id verified", slog.String("pc_id", pcID.String()))
 
 			next.ServeHTTP(w, r)
 		})
