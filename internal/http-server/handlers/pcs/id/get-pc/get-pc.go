@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"smart-pc-pc-service/internal/http-server/middlewares/pcs"
 
 	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
@@ -12,7 +13,6 @@ import (
 	"smart-pc-pc-service/internal/lib/logger/sl"
 	"smart-pc-pc-service/internal/storage"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 )
@@ -28,13 +28,7 @@ func New(log *slog.Logger, getter PcGetter) http.HandlerFunc {
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
 		userID := auth.GetUserUUID(r)
-
-		pcID, err := uuid.Parse(chi.URLParam(r, "pc_id"))
-		if err != nil {
-			log.Error("invalid pc id", sl.Err(err))
-			render.JSON(w, r, response.BadRequest("invalid pc id"))
-			return
-		}
+		pcID := pcs.GetPcUUID(r)
 
 		log.Debug("got pc id", slog.String("pc_id", pcID.String()))
 

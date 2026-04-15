@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	getPcLogs "smart-pc-pc-service/internal/http-server/handlers/pcs/id/logs/get-pc-logs"
+	"smart-pc-pc-service/internal/http-server/middlewares/pcs"
 
 	"smart-pc-pc-service/internal/config"
 	getPcs "smart-pc-pc-service/internal/http-server/handlers/pcs/get-pcs"
@@ -43,10 +44,12 @@ func New(
 
 	r.Route("/u/{uid}/pcs", func(r chi.Router) {
 		r.Use(auth.NewAuthMiddleware(log))
-		r.Use(auth.NewUserIdVerifierMiddleware(log))
+		r.Use(auth.NewUserIDVerifierMiddleware(log))
 
 		r.Get("/", getPcs.New(log, pcsGetter))
 		r.Route("/{pc_id}", func(r chi.Router) {
+			r.Use(pcs.NewPcIDVerifierMiddleware(log))
+
 			r.Get("/", getPc.New(log, pcGetter))
 			r.Patch("/", updatePc.New(log, updater))
 

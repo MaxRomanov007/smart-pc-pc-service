@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
+	"smart-pc-pc-service/internal/http-server/middlewares/pcs"
 	"smart-pc-pc-service/internal/lib/api/response"
 	"smart-pc-pc-service/internal/lib/api/response/pagination"
 	"smart-pc-pc-service/internal/lib/logger/sl"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 )
@@ -45,15 +45,7 @@ func New(log *slog.Logger, getter PcLogsGetter) http.HandlerFunc {
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
 		userID := auth.GetUserUUID(r)
-
-		pcID, err := uuid.Parse(chi.URLParam(r, "pc_id"))
-		if err != nil {
-			log.Warn("invalid pc id", sl.Err(err))
-			render.JSON(w, r, response.BadRequest("invalid pc id"))
-			return
-		}
-
-		log.Debug("got pc id", slog.String("pc_id", pcID.String()))
+		pcID := pcs.GetPcUUID(r)
 
 		order := r.URL.Query().Get("order")
 		if order == "" {
@@ -95,6 +87,7 @@ func New(log *slog.Logger, getter PcLogsGetter) http.HandlerFunc {
 
 		var logs []models.PcLog
 		var cursorID uuid.UUID
+		var err error
 
 		switch {
 		case after != "":
