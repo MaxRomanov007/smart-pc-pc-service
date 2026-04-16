@@ -28,7 +28,7 @@ func New(log *slog.Logger, getter PcGetter) http.HandlerFunc {
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
 		userID := auth.GetUserUUID(r)
-		pcID := pcs.GetPcUUID(r)
+		pcID := pcs.MustGetPcID(r)
 
 		log.Debug("got pc id", slog.String("pc_id", pcID.String()))
 

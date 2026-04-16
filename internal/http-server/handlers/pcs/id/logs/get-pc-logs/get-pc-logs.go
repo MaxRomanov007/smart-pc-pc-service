@@ -42,7 +42,7 @@ func New(log *slog.Logger, getter PcLogsGetter) http.HandlerFunc {
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
 		userID := auth.GetUserUUID(r)
-		pcID := pcs.GetPcUUID(r)
+		pcID := pcs.MustGetPcID(r)
 
 		params, err := parseLogsQueryParams(r)
 		if err != nil {

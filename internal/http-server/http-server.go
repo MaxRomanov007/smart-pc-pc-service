@@ -38,17 +38,22 @@ func New(
 	pcLogsGetter getPcLogs.PcLogsGetter,
 ) *Server {
 	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(mwLogger.New(log))
-	r.Use(middleware.Recoverer)
+	r.Use(
+		middleware.RequestID,
+		middleware.Recoverer,
+		mwLogger.New(log),
+	)
 
 	r.Route("/u/{uid}/pcs", func(r chi.Router) {
-		r.Use(auth.NewAuthMiddleware(log))
-		r.Use(auth.NewUserIDVerifierMiddleware(log))
+		r.Use(
+			auth.NewAuthMiddleware(log),
+			auth.NewParseUIDMiddleware(log),
+			auth.NewStrictUIDMiddleware(log),
+		)
 
 		r.Get("/", getPcs.New(log, pcsGetter))
-		r.Route("/{pc_id}", func(r chi.Router) {
-			r.Use(pcs.NewPcIDVerifierMiddleware(log))
+		r.Route(fmt.Sprintf("/{%s}", pcs.PcIDURLParam), func(r chi.Router) {
+			r.Use(pcs.NewParsePcIDMiddleware(log))
 
 			r.Get("/", getPc.New(log, pcGetter))
 			r.Patch("/", updatePc.New(log, updater))
