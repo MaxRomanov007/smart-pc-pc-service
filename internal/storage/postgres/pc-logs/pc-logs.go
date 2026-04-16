@@ -182,7 +182,7 @@ func NewFlushCreatePcLogsFunc(
 		errors := make([]string, n)
 
 		for i, l := range logs {
-			pcIDs[i] = l.PcID
+			pcIDs[i] = *l.PcID
 			cmdIDs[i] = l.CommandID
 			recvAts[i] = l.ReceivedAt
 			compAts[i] = l.CompletedAt

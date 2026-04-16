@@ -48,7 +48,7 @@ func New(ctx context.Context, log *slog.Logger, creator PcLogCreator) paho.Messa
 		log.Debug("got pcID", slog.String("pcID", pcID.String()))
 
 		if err := creator.CreatePcLog(ctx, models.PcLog{
-			PcID:        pcID,
+			PcID:        &pcID,
 			CommandID:   payload.Data.Command,
 			ReceivedAt:  payload.Data.ReceivedAt,
 			CompletedAt: payload.Data.CompletedAt,
