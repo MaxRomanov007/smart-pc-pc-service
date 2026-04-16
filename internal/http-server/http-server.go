@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	getCommands "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/get-commands"
+	getParameters "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/id/get-parameters"
 	getPcLogs "smart-pc-pc-service/internal/http-server/handlers/pcs/id/logs/get-pc-logs"
+	"smart-pc-pc-service/internal/http-server/middlewares/commands"
 	"smart-pc-pc-service/internal/http-server/middlewares/pcs"
 
 	"smart-pc-pc-service/internal/config"
@@ -34,8 +37,10 @@ func New(
 	cfg config.HTTPServer,
 	pcsGetter getPcs.PcGetter,
 	pcGetter getPc.PcGetter,
-	updater updatePc.PcUpdater,
+	pcUpdater updatePc.PcUpdater,
 	pcLogsGetter getPcLogs.PcLogsGetter,
+	pcCommandsGetter getCommands.CommandsGetter,
+	pcParametersGetter getParameters.ParamsGetter,
 ) *Server {
 	r := chi.NewRouter()
 	r.Use(
@@ -44,7 +49,7 @@ func New(
 		mwLogger.New(log),
 	)
 
-	r.Route("/u/{uid}/pcs", func(r chi.Router) {
+	r.Route(fmt.Sprintf("/u/{%s}/pcs", auth.UIDURLParam), func(r chi.Router) {
 		r.Use(
 			auth.NewAuthMiddleware(log),
 			auth.NewParseUIDMiddleware(log),
@@ -56,10 +61,20 @@ func New(
 			r.Use(pcs.NewParsePcIDMiddleware(log))
 
 			r.Get("/", getPc.New(log, pcGetter))
-			r.Patch("/", updatePc.New(log, updater))
+			r.Patch("/", updatePc.New(log, pcUpdater))
 
 			r.Route("/logs", func(r chi.Router) {
 				r.Get("/", getPcLogs.New(log, pcLogsGetter))
+			})
+
+			r.Route("/commands", func(r chi.Router) {
+				r.Get("/", getCommands.New(log, pcCommandsGetter))
+
+				r.Route(fmt.Sprintf("/{%s}", commands.PcCommandIDURLParam), func(r chi.Router) {
+					r.Use(commands.NewParsePcCommandIDMiddleware(log))
+
+					r.Get("/parameters", getParameters.New(log, pcParametersGetter))
+				})
 			})
 		})
 	})

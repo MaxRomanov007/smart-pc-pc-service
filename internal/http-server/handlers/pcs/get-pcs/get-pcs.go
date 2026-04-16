@@ -27,7 +27,7 @@ func New(log *slog.Logger, getter PcGetter) http.HandlerFunc {
 
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
-		userID := auth.GetUserUUID(r)
+		userID := auth.MustGetUID(r)
 
 		if slug := r.URL.Query().Get("slug"); slug != "" {
 			log.Info("got slug", slog.String("slug", slug))

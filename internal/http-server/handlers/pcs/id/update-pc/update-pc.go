@@ -38,7 +38,7 @@ func New(log *slog.Logger, updater PcUpdater) http.HandlerFunc {
 
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
-		userID := auth.GetUserUUID(r)
+		userID := auth.MustGetUID(r)
 		pcID := pcs.MustGetPcID(r)
 
 		var req Request

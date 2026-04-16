@@ -3,7 +3,6 @@ package auth
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -12,7 +11,6 @@ import (
 	"smart-pc-pc-service/internal/lib/logger/sl"
 
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 )
 
 type UserInfo struct {
@@ -107,22 +105,4 @@ func GetUserInfo(r *http.Request) (string, []string) {
 	userID := r.Header.Get("X-User-ID")
 	scopes := strings.Split(r.Header.Get("X-User-Scopes"), " ")
 	return userID, scopes
-}
-
-func GetUserUUID(r *http.Request) uuid.UUID {
-	const op = "middlewares.auth.GetUserUUID"
-
-	userID, _ := GetUserInfo(r)
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		panic(
-			fmt.Errorf(
-				"%s: failed to parse user id to uuid: %w",
-				op,
-				err,
-			),
-		)
-	}
-
-	return userUUID
 }

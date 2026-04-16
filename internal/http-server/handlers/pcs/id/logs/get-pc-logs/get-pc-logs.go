@@ -41,7 +41,7 @@ func New(log *slog.Logger, getter PcLogsGetter) http.HandlerFunc {
 		const op = "http-server.handlers.pcs.id.logs.get-pc-logs"
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
-		userID := auth.GetUserUUID(r)
+		userID := auth.MustGetUID(r)
 		pcID := pcs.MustGetPcID(r)
 
 		params, err := parseLogsQueryParams(r)

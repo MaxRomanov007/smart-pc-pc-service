@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	pcCommandParams "smart-pc-pc-service/internal/storage/postgres/pc-command-params"
+	pcCommands "smart-pc-pc-service/internal/storage/postgres/pc-commands"
 	pcLogs "smart-pc-pc-service/internal/storage/postgres/pc-logs"
 
 	"smart-pc-pc-service/internal/config"
@@ -14,8 +16,10 @@ import (
 )
 
 type Storage struct {
-	Pcs    *pcs.Storage
-	PcLogs *pcLogs.Storage
+	Pcs                 *pcs.Storage
+	PcLogs              *pcLogs.Storage
+	PcCommands          *pcCommands.Storage
+	PcCommandParameters *pcCommandParams.Storage
 }
 
 func New(ctx context.Context, log *slog.Logger, cfg config.Config) (*Storage, error) {
@@ -29,8 +33,10 @@ func New(ctx context.Context, log *slog.Logger, cfg config.Config) (*Storage, er
 	queries := dbqueries.New(conn)
 
 	return &Storage{
-		Pcs:    pcs.New(queries, cfg.Slug),
-		PcLogs: pcLogs.New(ctx, log, queries, cfg.Batch),
+		Pcs:                 pcs.New(queries, cfg.Slug),
+		PcLogs:              pcLogs.New(ctx, log, queries, cfg.Batch),
+		PcCommands:          pcCommands.New(queries),
+		PcCommandParameters: pcCommandParams.New(queries),
 	}, nil
 }
 
