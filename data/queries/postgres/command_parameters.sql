@@ -1,4 +1,4 @@
--- name: ListCommandParameters :many
+-- name: UserCommandParameters :many
 SELECT cp.id, cp.command_id, cp.name, cp.description, cp.type
 FROM command_parameters cp
          JOIN commands c ON c.id = cp.command_id

@@ -52,5 +52,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	<-waitable.WaitAll(storage, srv, conn)
+	waitable.WaitAll(storage, srv, conn)
 }

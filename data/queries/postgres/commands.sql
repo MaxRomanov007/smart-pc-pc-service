@@ -1,4 +1,4 @@
--- name: ListPCCommands :many
+-- name: UserPCCommands :many
 SELECT c.id, c.pc_id, c.name, c.description
 FROM commands c
          JOIN pcs p ON p.id = c.pc_id

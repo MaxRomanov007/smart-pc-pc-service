@@ -28,7 +28,7 @@ func New(queries *dbqueries.Queries, slugCfg config.Slug) *Storage {
 func (s *Storage) PcsByUserID(ctx context.Context, userID uuid.UUID) ([]models.Pc, error) {
 	const op = "storage.postgres.pcs.PcsByUserID"
 
-	pcs, err := s.queries.ListUserPCs(ctx, userID)
+	pcs, err := s.queries.UserPCs(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("%s: failed to get user pcs: %w", op, err)
 	}
@@ -48,7 +48,7 @@ func (s *Storage) PcBySlug(
 ) (models.Pc, error) {
 	const op = "storage.postgres.pcs.PcBySlug"
 
-	pc, err := s.queries.GetUserPCBySlug(ctx, dbqueries.GetUserPCBySlugParams{
+	pc, err := s.queries.UserPCBySlug(ctx, dbqueries.UserPCBySlugParams{
 		UserID: userID,
 		Slug:   slug,
 	})
@@ -65,7 +65,7 @@ func (s *Storage) PcBySlug(
 func (s *Storage) PcByID(ctx context.Context, userID, pcID uuid.UUID) (models.Pc, error) {
 	const op = "storage.postgres.pcs.PcByID"
 
-	pc, err := s.queries.GetUserPCByID(ctx, dbqueries.GetUserPCByIDParams{
+	pc, err := s.queries.UserPCByID(ctx, dbqueries.UserPCByIDParams{
 		UserID: userID,
 		ID:     pcID,
 	})

@@ -13,7 +13,7 @@ type PcLog struct {
 	ReceivedAt  time.Time  `json:"receivedAt"`
 	CompletedAt time.Time  `json:"completedAt"`
 	Status      string     `json:"status"`
-	Error       string     `json:"error,omitempty"`
+	Error       *string    `json:"error,omitempty"`
 
 	Pc      *Pc      `json:"pc,omitempty"`
 	Command *Command `json:"command,omitempty"`

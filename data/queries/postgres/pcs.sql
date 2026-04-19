@@ -1,15 +1,15 @@
--- name: ListUserPCs :many
+-- name: UserPCs :many
 SELECT id, user_id, slug, name, description, can_power_on
 FROM pcs
 WHERE user_id = @user_id;
 
--- name: GetUserPCBySlug :one
+-- name: UserPCBySlug :one
 SELECT id, user_id, slug, name, description, can_power_on
 FROM pcs
 WHERE user_id = @user_id
   AND slug = @slug;
 
--- name: GetUserPCByID :one
+-- name: UserPCByID :one
 SELECT id, user_id, slug, name, description, can_power_on
 FROM pcs
 WHERE user_id = @user_id

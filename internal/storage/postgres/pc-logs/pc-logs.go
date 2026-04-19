@@ -10,7 +10,6 @@ import (
 	"smart-pc-pc-service/internal/lib/batcher"
 	"smart-pc-pc-service/internal/lib/logger/sl"
 	"smart-pc-pc-service/internal/storage/postgres/dbqueries"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -27,7 +26,7 @@ func New(
 	batchCfg config.Batch,
 ) *Storage {
 	createLogsBatcher := batcher.New(ctx, &batcher.Options[models.PcLog]{
-		Flush:   NewFlushCreatePcLogsFunc(ctx, queries),
+		Flush:   NewFlushCreatePcLogsFunc(ctx, queries, log),
 		MaxSize: batchCfg.MaxSize,
 		Timeout: batchCfg.Timeout,
 		OnFlushError: func(err error) {
@@ -59,7 +58,7 @@ func (s *Storage) ListPCLogsAfterCursor(
 	order string,
 	limit int32,
 ) ([]models.PcLog, error) {
-	rows, err := s.queries.ListPCLogsAfterCursor(ctx, dbqueries.ListPCLogsAfterCursorParams{
+	rows, err := s.queries.UserPCLogsAfterCursor(ctx, dbqueries.UserPCLogsAfterCursorParams{
 		UserID: userID, PcID: pcID, Cursor: cursor, Order: order, Limit: limit,
 	})
 	if err != nil {
@@ -74,7 +73,7 @@ func (s *Storage) ListPCLogsBeforeCursor(
 	order string,
 	limit int32,
 ) ([]models.PcLog, error) {
-	rows, err := s.queries.ListPCLogsBeforeCursor(ctx, dbqueries.ListPCLogsBeforeCursorParams{
+	rows, err := s.queries.UserPCLogsBeforeCursor(ctx, dbqueries.UserPCLogsBeforeCursorParams{
 		UserID: userID, PcID: pcID, Cursor: cursor, Order: order, Limit: limit,
 	})
 	if err != nil {
@@ -91,7 +90,7 @@ func (s *Storage) ListPCLogsFirstPage(
 	order string,
 	limit int32,
 ) ([]models.PcLog, error) {
-	rows, err := s.queries.ListPCLogsFirstPage(ctx, dbqueries.ListPCLogsFirstPageParams{
+	rows, err := s.queries.UserPCLogsFirstPage(ctx, dbqueries.UserPCLogsFirstPageParams{
 		UserID: userID, PcID: pcID, Order: order, Limit: limit,
 	})
 	if err != nil {
@@ -101,10 +100,13 @@ func (s *Storage) ListPCLogsFirstPage(
 }
 
 func (s *Storage) CountPCLogs(ctx context.Context, userID, pcID uuid.UUID) (int64, error) {
-	return s.queries.CountPCLogs(ctx, dbqueries.CountPCLogsParams{UserID: userID, PcID: pcID})
+	return s.queries.UserPCLogsCount(
+		ctx,
+		dbqueries.UserPCLogsCountParams{UserID: userID, PcID: pcID},
+	)
 }
 
-func mapFirstPageLogs(rows []dbqueries.ListPCLogsFirstPageRow) []models.PcLog {
+func mapFirstPageLogs(rows []dbqueries.UserPCLogsFirstPageRow) []models.PcLog {
 	logs := make([]models.PcLog, len(rows))
 	for i, r := range rows {
 		logs[i] = models.PcLog{
@@ -113,7 +115,7 @@ func mapFirstPageLogs(rows []dbqueries.ListPCLogsFirstPageRow) []models.PcLog {
 			ReceivedAt:  r.ReceivedAt,
 			CompletedAt: r.CompletedAt,
 			Status:      r.Status,
-			Error:       *r.Error,
+			Error:       r.Error,
 		}
 		if r.CommandName != nil {
 			logs[i].Command = &models.Command{Name: *r.CommandName}
@@ -122,7 +124,7 @@ func mapFirstPageLogs(rows []dbqueries.ListPCLogsFirstPageRow) []models.PcLog {
 	return logs
 }
 
-func mapAfterLogs(rows []dbqueries.ListPCLogsAfterCursorRow) []models.PcLog {
+func mapAfterLogs(rows []dbqueries.UserPCLogsAfterCursorRow) []models.PcLog {
 	logs := make([]models.PcLog, len(rows))
 	for i, r := range rows {
 		logs[i] = models.PcLog{
@@ -131,7 +133,7 @@ func mapAfterLogs(rows []dbqueries.ListPCLogsAfterCursorRow) []models.PcLog {
 			ReceivedAt:  r.ReceivedAt,
 			CompletedAt: r.CompletedAt,
 			Status:      r.Status,
-			Error:       *r.Error,
+			Error:       r.Error,
 		}
 		if r.CommandName != nil {
 			logs[i].Command = &models.Command{
@@ -142,7 +144,7 @@ func mapAfterLogs(rows []dbqueries.ListPCLogsAfterCursorRow) []models.PcLog {
 	return logs
 }
 
-func mapBeforeLogs(rows []dbqueries.ListPCLogsBeforeCursorRow) []models.PcLog {
+func mapBeforeLogs(rows []dbqueries.UserPCLogsBeforeCursorRow) []models.PcLog {
 	logs := make([]models.PcLog, len(rows))
 	for i, r := range rows {
 		logs[i] = models.PcLog{
@@ -151,7 +153,7 @@ func mapBeforeLogs(rows []dbqueries.ListPCLogsBeforeCursorRow) []models.PcLog {
 			ReceivedAt:  r.ReceivedAt,
 			CompletedAt: r.CompletedAt,
 			Status:      r.Status,
-			Error:       *r.Error,
+			Error:       r.Error,
 		}
 		if r.CommandName != nil {
 			logs[i].Command = &models.Command{
@@ -165,6 +167,7 @@ func mapBeforeLogs(rows []dbqueries.ListPCLogsBeforeCursorRow) []models.PcLog {
 func NewFlushCreatePcLogsFunc(
 	ctx context.Context,
 	queries *dbqueries.Queries,
+	log *slog.Logger,
 ) batcher.FlushFunc[models.PcLog] {
 	return func(logs []models.PcLog) error {
 		const op = "storage.postgres.pc-logs.FlushCreatePcLogs"
@@ -173,31 +176,23 @@ func NewFlushCreatePcLogsFunc(
 			return nil
 		}
 
-		n := len(logs)
-		pcIDs := make([]uuid.UUID, n)
-		cmdIDs := make([]string, n)
-		recvAts := make([]time.Time, n)
-		compAts := make([]time.Time, n)
-		statuses := make([]string, n)
-		errors := make([]string, n)
+		log.Debug("flushing logs", sl.Op(op), slog.Int("count", len(logs)))
 
+		params := make([]dbqueries.CreatePCLogsParams, len(logs))
 		for i, l := range logs {
-			pcIDs[i] = *l.PcID
-			cmdIDs[i] = l.CommandID
-			recvAts[i] = l.ReceivedAt
-			compAts[i] = l.CompletedAt
-			statuses[i] = l.Status
-			errors[i] = l.Error
+			params[i] = dbqueries.CreatePCLogsParams{
+				CommandID:   l.CommandID,
+				ReceivedAt:  l.ReceivedAt,
+				CompletedAt: l.CompletedAt,
+				Status:      l.Status,
+				Error:       l.Error,
+			}
+			if l.PcID != nil {
+				params[i].PcID = *l.PcID
+			}
 		}
 
-		err := queries.BatchInsertPCLogs(ctx, dbqueries.BatchInsertPCLogsParams{
-			PcIds:        pcIDs,
-			CommandIds:   cmdIDs,
-			ReceivedAts:  recvAts,
-			CompletedAts: compAts,
-			Statuses:     statuses,
-			Errors:       errors,
-		})
+		_, err := queries.CreatePCLogs(ctx, params)
 		if err != nil {
 			return fmt.Errorf("%s: failed to insert pc logs: %w", op, err)
 		}

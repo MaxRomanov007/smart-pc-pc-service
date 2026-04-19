@@ -1,4 +1,4 @@
--- name: ListPCLogsAfterCursor :many
+-- name: UserPCLogsAfterCursor :many
 SELECT pl.id,
        pl.command_id,
        c.name AS command_name,
@@ -21,8 +21,7 @@ ORDER BY CASE WHEN sqlc.arg('order')::text = 'asc' THEN pl.id END ASC,
          CASE WHEN sqlc.arg('order')::text = 'desc' THEN pl.id END DESC
 LIMIT sqlc.arg('limit');
 
--- name: ListPCLogsBeforeCursor :many
--- Возвращает записи в обратном порядке для эффективного использования индекса по id. Реверс делается в Go.
+-- name: UserPCLogsBeforeCursor :many
 SELECT pl.id,
        pl.command_id,
        c.name AS command_name,
@@ -45,7 +44,7 @@ ORDER BY CASE WHEN sqlc.arg('order')::text = 'asc' THEN pl.id END DESC,
          CASE WHEN sqlc.arg('order')::text = 'desc' THEN pl.id END ASC
 LIMIT sqlc.arg('limit');
 
--- name: ListPCLogsFirstPage :many
+-- name: UserPCLogsFirstPage :many
 SELECT pl.id,
        pl.command_id,
        c.name AS command_name,
@@ -62,23 +61,18 @@ ORDER BY CASE WHEN sqlc.arg('order')::text = 'asc' THEN pl.id END ASC,
          CASE WHEN sqlc.arg('order')::text = 'desc' THEN pl.id END DESC
 LIMIT sqlc.arg('limit');
 
--- name: CountPCLogs :one
+-- name: UserPCLogsCount :one
 SELECT COUNT(*)
 FROM pc_logs pl
          JOIN pcs p ON p.id = pl.pc_id
 WHERE p.user_id = @user_id
   AND pl.pc_id = @pc_id;
 
--- name: BatchInsertPCLogs :exec
+-- name: CreatePCLogs :copyfrom
 INSERT INTO pc_logs (pc_id,
                      command_id,
                      received_at,
                      completed_at,
                      status,
                      error)
-SELECT UNNEST(@pc_ids::uuid[]),
-       UNNEST(@command_ids::varchar[]),
-       UNNEST(@received_ats::timestamptz[]),
-       UNNEST(@completed_ats::timestamptz[]),
-       UNNEST(@statuses::varchar[]),
-       UNNEST(@errors::varchar[]);
+VALUES ($1, $2, $3, $4, $5, $6);

@@ -20,9 +20,9 @@ func (s *Storage) ListPCCommands(
 	ctx context.Context,
 	userID, pcID uuid.UUID,
 ) ([]models.Command, error) {
-	rows, err := s.queries.ListPCCommands(
+	rows, err := s.queries.UserPCCommands(
 		ctx,
-		dbqueries.ListPCCommandsParams{UserID: userID, PcID: pcID},
+		dbqueries.UserPCCommandsParams{UserID: userID, PcID: pcID},
 	)
 	if err != nil {
 		return nil, err

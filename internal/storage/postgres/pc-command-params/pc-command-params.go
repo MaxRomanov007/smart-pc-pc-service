@@ -20,9 +20,9 @@ func (s *Storage) ListCommandParameters(
 	ctx context.Context,
 	userID, _, commandID uuid.UUID,
 ) ([]models.CommandParameter, error) {
-	rows, err := s.queries.ListCommandParameters(
+	rows, err := s.queries.UserCommandParameters(
 		ctx,
-		dbqueries.ListCommandParametersParams{UserID: userID, CommandID: commandID},
+		dbqueries.UserCommandParametersParams{UserID: userID, CommandID: commandID},
 	)
 	if err != nil {
 		return nil, err
