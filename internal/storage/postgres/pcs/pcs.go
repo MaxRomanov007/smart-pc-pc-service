@@ -156,6 +156,23 @@ func (s *Storage) CreatePc(ctx context.Context, pc models.Pc) (models.Pc, error)
 	return parseStoragePc(created), nil
 }
 
+func (s *Storage) DeleteUserPc(ctx context.Context, uid, id uuid.UUID) (models.Pc, error) {
+	const op = "storage.postgres.pcs.DeleteUserPc"
+
+	deleted, err := s.queries.DeleteUserPC(ctx, dbqueries.DeleteUserPCParams{
+		UserID: uid,
+		ID:     id,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.Pc{}, storage.ErrNotFound
+	}
+	if err != nil {
+		return models.Pc{}, fmt.Errorf("%s: failed to delete user pc: %w", op, err)
+	}
+
+	return parseStoragePc(deleted), nil
+}
+
 func parseStoragePc(pc dbqueries.Pc) models.Pc {
 	return models.Pc{
 		ID:          pc.ID,

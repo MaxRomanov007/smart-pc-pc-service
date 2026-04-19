@@ -7,6 +7,7 @@ import (
 	"net/url"
 	topicRouter "smart-pc-pc-service/internal/lib/mqtt/topic-router"
 	pcLogs "smart-pc-pc-service/internal/mqtt/handlers/pc-logs"
+	"smart-pc-pc-service/internal/storage/postgres"
 
 	"smart-pc-pc-service/internal/config"
 	"smart-pc-pc-service/internal/lib/logger/sl"
@@ -24,7 +25,7 @@ func New(
 	ctx context.Context,
 	log *slog.Logger,
 	cfg config.MQTT,
-	pcLogCreator pcLogs.PcLogCreator,
+	storage *postgres.Storage,
 ) (*Connection, error) {
 	const op = "mqtt.New"
 
@@ -34,7 +35,7 @@ func New(
 	}
 
 	router := topicRouter.NewTopicRouter()
-	router.RegisterHandler("users/+/pcs/+/log", pcLogs.New(ctx, log, pcLogCreator))
+	router.RegisterHandler("users/+/pcs/+/log", pcLogs.New(ctx, log, storage.PcLogs))
 
 	cliCfg := autopaho.ClientConfig{
 		ServerUrls:                    []*url.URL{u},

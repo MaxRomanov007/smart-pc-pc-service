@@ -9,9 +9,11 @@ import (
 	createPc "smart-pc-pc-service/internal/http-server/handlers/pcs/create-pc"
 	getCommands "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/get-commands"
 	getParameters "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/id/get-parameters"
+	deletePc "smart-pc-pc-service/internal/http-server/handlers/pcs/id/delete-pc"
 	getPcLogs "smart-pc-pc-service/internal/http-server/handlers/pcs/id/logs/get-pc-logs"
 	"smart-pc-pc-service/internal/http-server/middlewares/commands"
 	"smart-pc-pc-service/internal/http-server/middlewares/pcs"
+	"smart-pc-pc-service/internal/storage/postgres"
 
 	"smart-pc-pc-service/internal/config"
 	getPcs "smart-pc-pc-service/internal/http-server/handlers/pcs/get-pcs"
@@ -36,13 +38,7 @@ type Server struct {
 func New(
 	log *slog.Logger,
 	cfg config.HTTPServer,
-	pcsGetter getPcs.PcGetter,
-	pcGetter getPc.PcGetter,
-	pcUpdater updatePc.PcUpdater,
-	pcLogsGetter getPcLogs.PcLogsGetter,
-	pcCommandsGetter getCommands.CommandsGetter,
-	pcParametersGetter getParameters.ParamsGetter,
-	pcCreator createPc.PcCreator,
+	storage *postgres.Storage,
 ) *Server {
 	r := chi.NewRouter()
 	r.Use(
@@ -58,26 +54,27 @@ func New(
 			auth.NewStrictUIDMiddleware(log),
 		)
 
-		r.Get("/", getPcs.New(log, pcsGetter))
-		r.Post("/", createPc.New(log, pcCreator))
+		r.Get("/", getPcs.New(log, storage.Pcs))
+		r.Post("/", createPc.New(log, storage.Pcs))
 
 		r.Route(fmt.Sprintf("/{%s}", pcs.PcIDURLParam), func(r chi.Router) {
 			r.Use(pcs.NewParsePcIDMiddleware(log))
 
-			r.Get("/", getPc.New(log, pcGetter))
-			r.Patch("/", updatePc.New(log, pcUpdater))
+			r.Get("/", getPc.New(log, storage.Pcs))
+			r.Patch("/", updatePc.New(log, storage.Pcs))
+			r.Delete("/", deletePc.New(log, storage.Pcs))
 
 			r.Route("/logs", func(r chi.Router) {
-				r.Get("/", getPcLogs.New(log, pcLogsGetter))
+				r.Get("/", getPcLogs.New(log, storage.PcLogs))
 			})
 
 			r.Route("/commands", func(r chi.Router) {
-				r.Get("/", getCommands.New(log, pcCommandsGetter))
+				r.Get("/", getCommands.New(log, storage.PcCommands))
 
 				r.Route(fmt.Sprintf("/{%s}", commands.PcCommandIDURLParam), func(r chi.Router) {
 					r.Use(commands.NewParsePcCommandIDMiddleware(log))
 
-					r.Get("/parameters", getParameters.New(log, pcParametersGetter))
+					r.Get("/parameters", getParameters.New(log, storage.PcCommandParameters))
 				})
 			})
 		})

@@ -29,3 +29,6 @@ RETURNING *;
 INSERT INTO pcs(user_id, slug, name, description, can_power_on)
 VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
+
+-- name: DeleteUserPC :one
+DELETE FROM pcs WHERE user_id = $1 AND id = $2 RETURNING *;

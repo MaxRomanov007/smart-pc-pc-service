@@ -29,17 +29,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	srv := httpServer.New(
-		log,
-		cfg.HTTPServer,
-		storage.Pcs,
-		storage.Pcs,
-		storage.Pcs,
-		storage.PcLogs,
-		storage.PcCommands,
-		storage.PcCommandParameters,
-		storage.Pcs,
-	)
+	srv := httpServer.New(log, cfg.HTTPServer, storage)
 	go func() {
 		if err := srv.Run(ctx); err != nil {
 			log.Error("http server error", sl.Err(err))
@@ -47,7 +37,7 @@ func main() {
 		}
 	}()
 
-	conn, err := mqtt.New(ctx, log, cfg.MQTT, storage.PcLogs)
+	conn, err := mqtt.New(ctx, log, cfg.MQTT, storage)
 	if err != nil {
 		log.Error("failed to create mqtt connection", sl.Err(err))
 		os.Exit(1)
