@@ -35,7 +35,7 @@ func (s *Storage) PcsByUserID(ctx context.Context, userID uuid.UUID) ([]models.P
 
 	result := make([]models.Pc, 0, len(pcs))
 	for _, pc := range pcs {
-		result = append(result, parsePgxPc(pc))
+		result = append(result, parseStoragePc(pc))
 	}
 
 	return result, nil
@@ -59,7 +59,7 @@ func (s *Storage) PcBySlug(
 		return models.Pc{}, fmt.Errorf("%s: failed to get user pc by slug: %w", op, err)
 	}
 
-	return parsePgxPc(pc), nil
+	return parseStoragePc(pc), nil
 }
 
 func (s *Storage) PcByID(ctx context.Context, userID, pcID uuid.UUID) (models.Pc, error) {
@@ -76,7 +76,7 @@ func (s *Storage) PcByID(ctx context.Context, userID, pcID uuid.UUID) (models.Pc
 		return models.Pc{}, fmt.Errorf("%s: failed to get user pc by id: %w", op, err)
 	}
 
-	return parsePgxPc(pc), nil
+	return parseStoragePc(pc), nil
 }
 
 func (s *Storage) UpdatePc(
@@ -105,7 +105,7 @@ func (s *Storage) UpdatePc(
 			return models.Pc{}, fmt.Errorf("%s: failed to update user pc: %w", op, err)
 		}
 
-		return parsePgxPc(pc), nil
+		return parseStoragePc(pc), nil
 	}
 
 	pcSlugger := slugger.New(s.slugCfg.Retries, func(slug string) (dbqueries.Pc, error, bool) {
@@ -121,16 +121,48 @@ func (s *Storage) UpdatePc(
 		return models.Pc{}, fmt.Errorf("%s: failed to update user pc: %w", op, err)
 	}
 
-	return parsePgxPc(pc), nil
+	return parseStoragePc(pc), nil
 }
 
-func parsePgxPc(pc dbqueries.Pc) models.Pc {
+func (s *Storage) CreatePc(ctx context.Context, pc models.Pc) (models.Pc, error) {
+	const op = "storage.postgres.pcs.CreatePc"
+
+	params := dbqueries.CreateUserPCParams{
+		UserID:      pc.UserID,
+		Name:        pc.Name,
+		Description: pc.Description,
+		CanPowerOn:  pc.CanPowerOn,
+	}
+
+	if params.Name == "" {
+		pc, err := s.queries.CreateUserPC(ctx, params)
+		if err != nil {
+			return models.Pc{}, fmt.Errorf("%s: failed to create user pc: %w", op, err)
+		}
+
+		return parseStoragePc(pc), nil
+	}
+
+	pcSlugger := slugger.New(s.slugCfg.Retries, func(slug string) (dbqueries.Pc, error, bool) {
+		params.Slug = slug
+		pc, err := s.queries.CreateUserPC(ctx, params)
+		return pc, err, postgres.IsUniqueViolation(err)
+	})
+	created, err := pcSlugger.DoCtx(ctx, params.Name)
+	if err != nil {
+		return models.Pc{}, fmt.Errorf("%s: failed to create user pc: %w", op, err)
+	}
+
+	return parseStoragePc(created), nil
+}
+
+func parseStoragePc(pc dbqueries.Pc) models.Pc {
 	return models.Pc{
 		ID:          pc.ID,
 		UserID:      pc.UserID,
 		Slug:        pc.Slug,
 		Name:        pc.Name,
-		Description: pc.Name,
+		Description: pc.Description,
 		CanPowerOn:  pc.CanPowerOn,
 	}
 }

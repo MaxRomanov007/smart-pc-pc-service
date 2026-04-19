@@ -24,3 +24,8 @@ SET name         = COALESCE(sqlc.narg('name'), name),
 WHERE user_id = @user_id
   AND id = @id
 RETURNING *;
+
+-- name: CreateUserPC :one
+INSERT INTO pcs(user_id, slug, name, description, can_power_on)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING *;

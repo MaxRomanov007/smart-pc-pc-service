@@ -1,8 +1,12 @@
 package response
 
 import (
+	"fmt"
 	"go/types"
 	"smart-pc-pc-service/internal/lib/api/response/pagination"
+	"strings"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type Response[T any] struct {
@@ -63,6 +67,39 @@ func NotFound(msg string) *Response[types.Nil] {
 
 func InternalError() *Response[types.Nil] {
 	return Error(StatusInternalError, "Internal error")
+}
+
+func ValidationError(errs validator.ValidationErrors) *Response[types.Nil] {
+	var errMessages []string
+
+	for _, err := range errs {
+		switch err.ActualTag() {
+		case "required":
+			errMessages = append(
+				errMessages,
+				fmt.Sprintf("field %q is a required field", err.Field()),
+			)
+		case "url":
+			errMessages = append(
+				errMessages,
+				fmt.Sprintf("field %q is not a valid URL", err.Field()),
+			)
+		case "max":
+			errMessages = append(
+				errMessages,
+				fmt.Sprintf("field %q must not exceed %s", err.Field(), err.Param()),
+			)
+		case "min":
+			errMessages = append(
+				errMessages,
+				fmt.Sprintf("field %q must be at least %s", err.Field(), err.Param()),
+			)
+		default:
+			errMessages = append(errMessages, fmt.Sprintf("field %q is not valid", err.Field()))
+		}
+	}
+
+	return Error(StatusBadRequest, strings.Join(errMessages, ", "))
 }
 
 func (r *Response[T]) WithPagination(p *pagination.Pagination) *Response[T] {

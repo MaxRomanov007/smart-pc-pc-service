@@ -38,6 +38,7 @@ func main() {
 		storage.PcLogs,
 		storage.PcCommands,
 		storage.PcCommandParameters,
+		storage.Pcs,
 	)
 	go func() {
 		if err := srv.Run(ctx); err != nil {

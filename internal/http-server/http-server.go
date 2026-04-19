@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	createPc "smart-pc-pc-service/internal/http-server/handlers/pcs/create-pc"
 	getCommands "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/get-commands"
 	getParameters "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/id/get-parameters"
 	getPcLogs "smart-pc-pc-service/internal/http-server/handlers/pcs/id/logs/get-pc-logs"
@@ -41,6 +42,7 @@ func New(
 	pcLogsGetter getPcLogs.PcLogsGetter,
 	pcCommandsGetter getCommands.CommandsGetter,
 	pcParametersGetter getParameters.ParamsGetter,
+	pcCreator createPc.PcCreator,
 ) *Server {
 	r := chi.NewRouter()
 	r.Use(
@@ -57,6 +59,8 @@ func New(
 		)
 
 		r.Get("/", getPcs.New(log, pcsGetter))
+		r.Post("/", createPc.New(log, pcCreator))
+
 		r.Route(fmt.Sprintf("/{%s}", pcs.PcIDURLParam), func(r chi.Router) {
 			r.Use(pcs.NewParsePcIDMiddleware(log))
 
