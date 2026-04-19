@@ -14,6 +14,6 @@ func NewParsePcIDMiddleware(log *slog.Logger) func(next http.Handler) http.Handl
 	return uuidmw.NewUUIDMiddleware(log, PcIDURLParam)
 }
 
-func MustGetPcID(r *http.Request) uuid.UUID {
+func MustPcID(r *http.Request) uuid.UUID {
 	return uuidmw.MustFromContext(r.Context(), PcIDURLParam)
 }

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
-	"smart-pc-pc-service/internal/http-server/middlewares/pcs"
+	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/pcs"
 	"smart-pc-pc-service/internal/lib/api/response"
 	"smart-pc-pc-service/internal/lib/logger/sl"
 
@@ -41,8 +41,8 @@ func New(log *slog.Logger, getter PcLogsGetter) http.HandlerFunc {
 		const op = "http-server.handlers.pcs.id.logs.get-pc-logs"
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
-		userID := auth.MustGetUID(r)
-		pcID := pcs.MustGetPcID(r)
+		userID := auth.MustUID(r)
+		pcID := pcs.MustPcID(r)
 
 		params, err := parseLogsQueryParams(r)
 		if err != nil {
@@ -65,8 +65,10 @@ func New(log *slog.Logger, getter PcLogsGetter) http.HandlerFunc {
 			return
 		}
 
+		log.Debug("got logs", slog.Any("logs", logs), slog.Int64("total", total))
 		result := buildPagination(logs, params, total)
 		render.JSON(w, r, response.OK(&result.Logs).WithPagination(result.Pag))
+		return
 	}
 }
 

@@ -14,6 +14,6 @@ func NewParseUIDMiddleware(log *slog.Logger) func(next http.Handler) http.Handle
 	return uuidmw.NewUUIDMiddleware(log, UIDURLParam)
 }
 
-func MustGetUID(r *http.Request) uuid.UUID {
+func MustUID(r *http.Request) uuid.UUID {
 	return uuidmw.MustFromContext(r.Context(), UIDURLParam)
 }

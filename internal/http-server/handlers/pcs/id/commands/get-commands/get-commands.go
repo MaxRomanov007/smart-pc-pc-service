@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-	"smart-pc-pc-service/internal/http-server/middlewares/pcs"
+	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/pcs"
 
 	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
@@ -24,8 +24,8 @@ func New(log *slog.Logger, getter CommandsGetter) http.HandlerFunc {
 		const op = "http-server.handlers.pcs.id.commands.get-commands"
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
-		userID := auth.MustGetUID(r)
-		pcID := pcs.MustGetPcID(r)
+		userID := auth.MustUID(r)
+		pcID := pcs.MustPcID(r)
 
 		cmds, err := getter.ListPCCommands(r.Context(), userID, pcID)
 		if err != nil {
@@ -34,6 +34,8 @@ func New(log *slog.Logger, getter CommandsGetter) http.HandlerFunc {
 			return
 		}
 
+		log.Debug("got commands", slog.Any("commands", cmds))
 		render.JSON(w, r, response.OK(&cmds))
+		return
 	}
 }

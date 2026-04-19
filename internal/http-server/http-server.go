@@ -11,8 +11,9 @@ import (
 	getParameters "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/id/get-parameters"
 	deletePc "smart-pc-pc-service/internal/http-server/handlers/pcs/id/delete-pc"
 	getPcLogs "smart-pc-pc-service/internal/http-server/handlers/pcs/id/logs/get-pc-logs"
-	"smart-pc-pc-service/internal/http-server/middlewares/commands"
-	"smart-pc-pc-service/internal/http-server/middlewares/pcs"
+	"smart-pc-pc-service/internal/http-server/middlewares/request"
+	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/commands"
+	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/pcs"
 	"smart-pc-pc-service/internal/storage/postgres"
 
 	"smart-pc-pc-service/internal/config"
@@ -25,6 +26,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-playground/validator/v10"
 )
 
 type Server struct {
@@ -47,6 +49,8 @@ func New(
 		mwLogger.New(log),
 	)
 
+	v := validator.New()
+
 	r.Route(fmt.Sprintf("/u/{%s}/pcs", auth.UIDURLParam), func(r chi.Router) {
 		r.Use(
 			auth.NewAuthMiddleware(log),
@@ -55,7 +59,7 @@ func New(
 		)
 
 		r.Get("/", getPcs.New(log, storage.Pcs))
-		r.Post("/", createPc.New(log, storage.Pcs))
+		r.With(request.New[createPc.Request](log, v)).Post("/", createPc.New(log, storage.Pcs))
 
 		r.Route(fmt.Sprintf("/{%s}", pcs.PcIDURLParam), func(r chi.Router) {
 			r.Use(pcs.NewParsePcIDMiddleware(log))

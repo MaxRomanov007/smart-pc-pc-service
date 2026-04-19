@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"smart-pc-pc-service/internal/http-server/middlewares/pcs"
+	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/pcs"
 
 	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
@@ -27,8 +27,8 @@ func New(log *slog.Logger, getter PcGetter) http.HandlerFunc {
 
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
-		userID := auth.MustGetUID(r)
-		pcID := pcs.MustGetPcID(r)
+		userID := auth.MustUID(r)
+		pcID := pcs.MustPcID(r)
 
 		pc, err := getter.PcByID(r.Context(), userID, pcID)
 		if errors.Is(err, storage.ErrNotFound) {

@@ -14,6 +14,6 @@ func NewParsePcCommandIDMiddleware(log *slog.Logger) func(next http.Handler) htt
 	return uuidmw.NewUUIDMiddleware(log, PcCommandIDURLParam)
 }
 
-func MustGetPcCommandID(r *http.Request) uuid.UUID {
+func MustPcCommandID(r *http.Request) uuid.UUID {
 	return uuidmw.MustFromContext(r.Context(), PcCommandIDURLParam)
 }

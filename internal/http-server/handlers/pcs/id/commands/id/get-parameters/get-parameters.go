@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-	"smart-pc-pc-service/internal/http-server/middlewares/commands"
-	"smart-pc-pc-service/internal/http-server/middlewares/pcs"
+	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/commands"
+	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/pcs"
 
 	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
@@ -28,9 +28,9 @@ func New(log *slog.Logger, getter ParamsGetter) http.HandlerFunc {
 		const op = "http-server.handlers.pcs.id.commands.id.get-parameters"
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
-		userID := auth.MustGetUID(r)
-		pcID := pcs.MustGetPcID(r)
-		commandID := commands.MustGetPcCommandID(r)
+		userID := auth.MustUID(r)
+		pcID := pcs.MustPcID(r)
+		commandID := commands.MustPcCommandID(r)
 
 		params, err := getter.ListCommandParameters(r.Context(), userID, pcID, commandID)
 		if err != nil {
@@ -39,6 +39,8 @@ func New(log *slog.Logger, getter ParamsGetter) http.HandlerFunc {
 			return
 		}
 
+		log.Debug("got parameters", slog.Any("parameters", params))
 		render.JSON(w, r, response.OK(&params))
+		return
 	}
 }

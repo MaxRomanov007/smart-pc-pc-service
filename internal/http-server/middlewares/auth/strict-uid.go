@@ -18,7 +18,7 @@ func NewStrictUIDMiddleware(log *slog.Logger) func(next http.Handler) http.Handl
 			log := log.With(sl.Op(op), sl.ReqID(r))
 
 			uid, _ := GetUserInfo(r)
-			requestedUID := MustGetUID(r).String()
+			requestedUID := MustUID(r).String()
 
 			if uid != requestedUID {
 				log.Warn(

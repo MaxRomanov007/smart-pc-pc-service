@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
-	"smart-pc-pc-service/internal/http-server/middlewares/pcs"
+	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/pcs"
 	"smart-pc-pc-service/internal/lib/api/response"
 	"smart-pc-pc-service/internal/lib/logger/sl"
 	"smart-pc-pc-service/internal/storage"
@@ -26,8 +26,8 @@ func New(log *slog.Logger, deleter PcDeleter) http.HandlerFunc {
 
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
-		userID := auth.MustGetUID(r)
-		pcID := pcs.MustGetPcID(r)
+		userID := auth.MustUID(r)
+		pcID := pcs.MustPcID(r)
 
 		deleted, err := deleter.DeleteUserPc(r.Context(), userID, pcID)
 		if errors.Is(err, storage.ErrNotFound) {

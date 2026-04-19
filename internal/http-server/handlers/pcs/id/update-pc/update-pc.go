@@ -5,7 +5,8 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"smart-pc-pc-service/internal/http-server/middlewares/pcs"
+	"smart-pc-pc-service/internal/http-server/middlewares/request"
+	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/pcs"
 
 	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
@@ -27,8 +28,8 @@ type PcUpdater interface {
 }
 
 type Request struct {
-	Name        *string `json:"name"`
-	Description *string `json:"description"`
+	Name        *string `json:"name,omitempty"        validate:"omitempty,max=255"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=1024"`
 	CanPowerOn  *bool   `json:"canPowerOn"`
 }
 
@@ -38,15 +39,9 @@ func New(log *slog.Logger, updater PcUpdater) http.HandlerFunc {
 
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
-		userID := auth.MustGetUID(r)
-		pcID := pcs.MustGetPcID(r)
-
-		var req Request
-		if err := render.DecodeJSON(r.Body, &req); err != nil {
-			log.Error("failed to decode request body", sl.Err(err))
-			render.JSON(w, r, response.BadRequest("failed to decode request"))
-			return
-		}
+		userID := auth.MustUID(r)
+		pcID := pcs.MustPcID(r)
+		req := request.MustGet[Request](r)
 
 		pc, err := updater.UpdatePc(
 			r.Context(),
