@@ -17,7 +17,6 @@ type Storage struct {
 }
 
 func New(db *pgx.Conn) *Storage {
-
 	return &Storage{db: db}
 }
 
@@ -109,6 +108,29 @@ func (s *Storage) CreateUserPcCommand(
 	}
 
 	return mapStorageCommand(dbCommand), nil
+}
+
+func (s *Storage) DeleteUserPcCommand(
+	ctx context.Context,
+	uid, pcID, commandID uuid.UUID,
+) (models.Command, error) {
+	const op = "storage.postgres.pc-commands.DeleteUserPcCommand"
+
+	queries := dbqueries.New(s.db)
+
+	deleted, err := queries.DeleteUserPcCommand(ctx, dbqueries.DeleteUserPcCommandParams{
+		ID:     commandID,
+		PcID:   pcID,
+		UserID: uid,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.Command{}, storage.ErrNotFound
+	}
+	if err != nil {
+		return models.Command{}, fmt.Errorf("%s: failed to delete user pc command: %w", op, err)
+	}
+
+	return mapStorageCommand(deleted), nil
 }
 
 func mapStorageCommand(command dbqueries.Command) models.Command {

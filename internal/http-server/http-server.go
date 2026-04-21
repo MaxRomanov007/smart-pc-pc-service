@@ -10,6 +10,7 @@ import (
 	createPc "smart-pc-pc-service/internal/http-server/handlers/pcs/create-pc"
 	createCommand "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/create-command"
 	getCommands "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/get-commands"
+	deleteCommand "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/id/delete-command"
 	getParameters "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/id/get-parameters"
 	deletePc "smart-pc-pc-service/internal/http-server/handlers/pcs/id/delete-pc"
 	getPcLogs "smart-pc-pc-service/internal/http-server/handlers/pcs/id/logs/get-pc-logs"
@@ -92,6 +93,7 @@ func New(
 				r.Route(fmt.Sprintf("/{%s}", commands.PcCommandIDURLParam), func(r chi.Router) {
 					r.Use(commands.NewParsePcCommandIDMiddleware(log))
 
+					r.Delete("/", deleteCommand.New(log, storage.PcCommands))
 					r.Get("/parameters", getParameters.New(log, storage.PcCommandParameters))
 				})
 			})

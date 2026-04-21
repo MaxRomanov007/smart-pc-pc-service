@@ -3,7 +3,7 @@
 CREATE TABLE command_parameters
 (
     id          UUID DEFAULT uuidv7() PRIMARY KEY,
-    command_id  UUID          NOT NULL REFERENCES commands (id),
+    command_id  UUID          NOT NULL REFERENCES commands (id) ON DELETE CASCADE,
     name        VARCHAR(255)  NOT NULL,
     description VARCHAR(1024) NOT NULL,
     type        SMALLINT      NOT NULL

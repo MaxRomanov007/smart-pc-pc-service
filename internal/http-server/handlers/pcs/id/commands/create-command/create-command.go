@@ -77,7 +77,7 @@ func New(
 		}
 
 		log.Debug("created command", slog.Any("command", command))
-		render.JSON(w, r, command)
+		render.JSON(w, r, response.OK(&command))
 		return
 	}
 }
