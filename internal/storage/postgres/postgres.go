@@ -35,7 +35,7 @@ func New(ctx context.Context, log *slog.Logger, cfg config.Config) (*Storage, er
 	return &Storage{
 		Pcs:                 pcs.New(queries, cfg.Slug),
 		PcLogs:              pcLogs.New(ctx, log, queries, cfg.Batch),
-		PcCommands:          pcCommands.New(queries),
+		PcCommands:          pcCommands.New(conn),
 		PcCommandParameters: pcCommandParams.New(queries),
 	}, nil
 }

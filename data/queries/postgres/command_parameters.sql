@@ -5,3 +5,7 @@ FROM command_parameters cp
          JOIN pcs p ON p.id = c.pc_id
 WHERE p.user_id = @user_id
   AND cp.command_id = @command_id;
+
+-- name: CreateUserPcCommandParameters :copyfrom
+INSERT INTO command_parameters(command_id, name, description, type)
+VALUES ($1, $2, $3, $4);

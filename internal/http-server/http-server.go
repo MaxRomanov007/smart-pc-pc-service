@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"reflect"
 	createPc "smart-pc-pc-service/internal/http-server/handlers/pcs/create-pc"
+	createCommand "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/create-command"
 	getCommands "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/get-commands"
 	getParameters "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/id/get-parameters"
 	deletePc "smart-pc-pc-service/internal/http-server/handlers/pcs/id/delete-pc"
@@ -15,6 +17,7 @@ import (
 	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/commands"
 	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/pcs"
 	"smart-pc-pc-service/internal/storage/postgres"
+	"strings"
 
 	"smart-pc-pc-service/internal/config"
 	getPcs "smart-pc-pc-service/internal/http-server/handlers/pcs/get-pcs"
@@ -50,6 +53,13 @@ func New(
 	)
 
 	v := validator.New()
+	v.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		if name == "" || name == "-" {
+			return fld.Name
+		}
+		return name
+	})
 
 	r.Route(fmt.Sprintf("/u/{%s}/pcs", auth.UIDURLParam), func(r chi.Router) {
 		r.Use(
@@ -59,13 +69,15 @@ func New(
 		)
 
 		r.Get("/", getPcs.New(log, storage.Pcs))
-		r.With(request.New[createPc.Request](log, v)).Post("/", createPc.New(log, storage.Pcs))
+		r.With(request.New[createPc.Request](log, v)).
+			Post("/", createPc.New(log, storage.Pcs))
 
 		r.Route(fmt.Sprintf("/{%s}", pcs.PcIDURLParam), func(r chi.Router) {
 			r.Use(pcs.NewParsePcIDMiddleware(log))
 
 			r.Get("/", getPc.New(log, storage.Pcs))
-			r.Patch("/", updatePc.New(log, storage.Pcs))
+			r.With(request.New[updatePc.Request](log, v)).
+				Patch("/", updatePc.New(log, storage.Pcs))
 			r.Delete("/", deletePc.New(log, storage.Pcs))
 
 			r.Route("/logs", func(r chi.Router) {
@@ -74,6 +86,8 @@ func New(
 
 			r.Route("/commands", func(r chi.Router) {
 				r.Get("/", getCommands.New(log, storage.PcCommands))
+				r.With(request.New[createCommand.Request](log, v)).
+					Post("/", createCommand.New(log, storage.PcCommands))
 
 				r.Route(fmt.Sprintf("/{%s}", commands.PcCommandIDURLParam), func(r chi.Router) {
 					r.Use(commands.NewParsePcCommandIDMiddleware(log))

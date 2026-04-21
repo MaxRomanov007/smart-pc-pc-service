@@ -2,8 +2,10 @@ package request
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"smart-pc-pc-service/internal/lib/api/response"
@@ -28,8 +30,40 @@ func New[T any](
 
 			var req T
 			if err := render.DecodeJSON(r.Body, &req); err != nil {
-				log.Error("failed to decode request body", sl.Err(err))
-				render.JSON(w, r, response.InternalError())
+				var syntaxErr *json.SyntaxError
+				var unmarshalTypeErr *json.UnmarshalTypeError
+
+				switch {
+				case errors.Is(err, io.EOF):
+					log.Warn("request body is empty")
+					render.JSON(w, r, response.BadRequest("request body is empty"))
+
+				case errors.Is(err, io.ErrUnexpectedEOF):
+					log.Warn("invalid request body")
+					render.JSON(w, r, response.BadRequest("invalid request body"))
+
+				case errors.As(err, &syntaxErr):
+					log.Warn("invalid json syntax", slog.Int64("offset", syntaxErr.Offset))
+					render.JSON(w, r, response.BadRequest("invalid json syntax"))
+
+				case errors.As(err, &unmarshalTypeErr):
+					log.Warn("invalid field type",
+						slog.String("field", unmarshalTypeErr.Field),
+						slog.String("expected", unmarshalTypeErr.Type.String()),
+					)
+					render.JSON(
+						w,
+						r,
+						response.BadRequest(
+							fmt.Sprintf("invalid type for field '%s'", unmarshalTypeErr.Field),
+						),
+					)
+
+				default:
+					log.Error("failed to decode request body", sl.Err(err))
+					render.JSON(w, r, response.InternalError())
+				}
+
 				return
 			}
 
