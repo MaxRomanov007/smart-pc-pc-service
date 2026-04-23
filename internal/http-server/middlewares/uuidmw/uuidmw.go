@@ -37,7 +37,7 @@ func NewUUIDMiddleware(
 				render.JSON(
 					w,
 					r,
-					response.BadRequest(fmt.Sprintf("url param %q is missing", param)),
+					response.BadRequest(fmt.Sprintf("url param %s is missing", param)),
 				)
 				return
 			}
@@ -45,8 +45,12 @@ func NewUUIDMiddleware(
 
 			id, err := uuid.Parse(raw)
 			if err != nil {
-				log.Warn("invalid pc id", sl.Err(err))
-				render.JSON(w, r, response.BadRequest("invalid pc id"))
+				log.Warn("invalid param", sl.Err(err))
+				render.JSON(
+					w,
+					r,
+					response.BadRequest(fmt.Sprintf("url param %s is invalid", param)),
+				)
 				return
 			}
 			log.Debug("param parsed")
@@ -70,7 +74,7 @@ func MustFromContext(ctx context.Context, param string) uuid.UUID {
 	if !ok {
 		panic(
 			fmt.Errorf(
-				"%s: can not get param %q from context, looks like you forgot to use middleware",
+				"%s: can not get param %s from context, looks like you forgot to use middleware",
 				op,
 				param,
 			),

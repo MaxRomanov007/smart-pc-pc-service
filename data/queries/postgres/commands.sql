@@ -23,3 +23,14 @@ WHERE c.id = @id
                AND p.id = @pc_id
                AND p.user_id = @user_id)
 RETURNING *;
+
+-- name: UpdateUserPcCommand :one
+UPDATE commands c
+SET name        = COALESCE(sqlc.narg('name'), name),
+    description = COALESCE(sqlc.narg('description'), description)
+WHERE c.id = @id
+  AND EXISTS(SELECT 1
+             FROM pcs p
+             WHERE p.id = c.pc_id
+               AND p.user_id = @user_id)
+RETURNING *;

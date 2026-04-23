@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 )
 
 type ctxKey string
@@ -58,6 +59,10 @@ func New[T any](
 							fmt.Sprintf("invalid type for field '%s'", unmarshalTypeErr.Field),
 						),
 					)
+
+				case uuid.IsInvalidLengthError(err):
+					log.Warn("invalid request uuid field length")
+					render.JSON(w, r, response.BadRequest("invalid request uuid field length"))
 
 				default:
 					log.Error("failed to decode request body", sl.Err(err))

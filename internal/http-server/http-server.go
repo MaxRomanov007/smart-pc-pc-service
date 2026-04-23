@@ -12,6 +12,7 @@ import (
 	getCommands "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/get-commands"
 	deleteCommand "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/id/delete-command"
 	getParameters "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/id/get-parameters"
+	updateCommand "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/id/update-command"
 	deletePc "smart-pc-pc-service/internal/http-server/handlers/pcs/id/delete-pc"
 	getPcLogs "smart-pc-pc-service/internal/http-server/handlers/pcs/id/logs/get-pc-logs"
 	"smart-pc-pc-service/internal/http-server/middlewares/request"
@@ -95,6 +96,8 @@ func New(
 
 					r.Delete("/", deleteCommand.New(log, storage.PcCommands))
 					r.Get("/parameters", getParameters.New(log, storage.PcCommandParameters))
+					r.With(request.New[updateCommand.Request](log, v)).
+						Patch("/", updateCommand.New(log, storage.PcCommands))
 				})
 			})
 		})
