@@ -19,7 +19,7 @@ import (
 )
 
 type RequestParameter struct {
-	ID          uuid.UUID `json:"id"                    validate:"required,uuid"`
+	ID          uuid.UUID `json:"id,omitempty"          validate:"omitempty,uuid"`
 	Name        string    `json:"name"                  validate:"required,max=255"`
 	Description string    `json:"description,omitempty" validate:"omitempty,max=1024"`
 	Type        int16     `json:"type"                  validate:"required,min=1,max=3"`

@@ -191,7 +191,15 @@ func (s *Storage) UpdateUserPcCommand(
 	descriptions := make([]string, len(command.Parameters))
 	types := make([]int16, len(command.Parameters))
 	for i, param := range command.Parameters {
-		ids[i] = param.ID
+		if param.ID != uuid.Nil {
+			ids[i] = param.ID
+		} else {
+			id, err := uuid.NewV7()
+			if err != nil {
+				return models.Command{}, fmt.Errorf("%s: failed to create uuid: %w", op, err)
+			}
+			ids[i] = id
+		}
 		names[i] = param.Name
 		descriptions[i] = param.Description
 		types[i] = param.Type
