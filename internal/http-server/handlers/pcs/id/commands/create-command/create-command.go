@@ -63,7 +63,7 @@ func New(
 			Name:        req.Name,
 			Description: req.Description,
 			Parameters:  parameters,
-			PcID:        pcID,
+			PcID:        &pcID,
 		})
 		if errors.Is(err, storage.ErrNotFound) {
 			log.Warn("pc for command not found")

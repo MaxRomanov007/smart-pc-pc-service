@@ -64,8 +64,8 @@ func New(log *slog.Logger, updater CommandUpdater) http.HandlerFunc {
 		}
 
 		updated, err := updater.UpdateUserPcCommand(r.Context(), userID, models.Command{
-			ID:          commandID,
-			PcID:        pcID,
+			ID:          &commandID,
+			PcID:        &pcID,
 			Name:        req.Name,
 			Description: req.Description,
 			Parameters:  parameters,

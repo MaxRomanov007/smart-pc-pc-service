@@ -10,13 +10,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Storage struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func New(db *pgx.Conn) *Storage {
+func New(db *pgxpool.Pool) *Storage {
 	return &Storage{db: db}
 }
 
@@ -76,7 +77,7 @@ func (s *Storage) CreateUserPcCommand(
 	dbCommand, err := queries.CreateUserPcCommand(ctx, dbqueries.CreateUserPcCommandParams{
 		Name:        command.Name,
 		Description: command.Description,
-		PcID:        command.PcID,
+		PcID:        *command.PcID,
 		UserID:      uid,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -170,7 +171,7 @@ func (s *Storage) UpdateUserPcCommand(
 	updatedCommand, err := queries.UpdateUserPcCommand(ctx, dbqueries.UpdateUserPcCommandParams{
 		Name:        &command.Name,
 		Description: &command.Description,
-		ID:          command.ID,
+		ID:          *command.ID,
 		UserID:      uid,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -208,7 +209,7 @@ func (s *Storage) UpdateUserPcCommand(
 	params, err := queries.SyncUserPcCommandParameters(
 		ctx,
 		dbqueries.SyncUserPcCommandParametersParams{
-			CommandID:    result.ID,
+			CommandID:    *result.ID,
 			UserID:       uid,
 			Ids:          ids,
 			Names:        names,
@@ -231,8 +232,8 @@ func (s *Storage) UpdateUserPcCommand(
 
 func mapStorageCommand(command dbqueries.Command) models.Command {
 	return models.Command{
-		ID:          command.ID,
-		PcID:        command.PcID,
+		ID:          &command.ID,
+		PcID:        &command.PcID,
 		Name:        command.Name,
 		Description: command.Description,
 	}

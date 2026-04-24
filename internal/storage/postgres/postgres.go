@@ -12,7 +12,7 @@ import (
 	"smart-pc-pc-service/internal/storage/postgres/dbqueries"
 	"smart-pc-pc-service/internal/storage/postgres/pcs"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Storage struct {
@@ -25,7 +25,7 @@ type Storage struct {
 func New(ctx context.Context, log *slog.Logger, cfg config.Config) (*Storage, error) {
 	const op = "storage.postgres.New"
 
-	conn, err := pgx.Connect(ctx, cfg.Storage.Postgres.ConnectionString())
+	conn, err := pgxpool.New(ctx, cfg.Storage.Postgres.ConnectionString())
 	if err != nil {
 		return nil, fmt.Errorf("%s: failed to connect to postgres storage: %w", op, err)
 	}

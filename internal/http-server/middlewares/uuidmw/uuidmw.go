@@ -41,7 +41,6 @@ func NewUUIDMiddleware(
 				)
 				return
 			}
-			log.Debug("got param", slog.String("value", raw))
 
 			id, err := uuid.Parse(raw)
 			if err != nil {
@@ -53,7 +52,7 @@ func NewUUIDMiddleware(
 				)
 				return
 			}
-			log.Debug("param parsed")
+			log.Debug("param parsed", slog.String("value", id.String()))
 
 			ctx := context.WithValue(r.Context(), newKey(param), id)
 			next.ServeHTTP(w, r.WithContext(ctx))
