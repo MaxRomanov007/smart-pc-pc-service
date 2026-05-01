@@ -6,29 +6,27 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"reflect"
+	"smart-pc-pc-service/internal/config"
 	createPc "smart-pc-pc-service/internal/http-server/handlers/pcs/create-pc"
+	getPcs "smart-pc-pc-service/internal/http-server/handlers/pcs/get-pcs"
 	createCommand "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/create-command"
 	getCommands "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/get-commands"
 	deleteCommand "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/id/delete-command"
 	getParameters "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/id/get-parameters"
 	updateCommand "smart-pc-pc-service/internal/http-server/handlers/pcs/id/commands/id/update-command"
 	deletePc "smart-pc-pc-service/internal/http-server/handlers/pcs/id/delete-pc"
+	getPc "smart-pc-pc-service/internal/http-server/handlers/pcs/id/get-pc"
 	getPcLogs "smart-pc-pc-service/internal/http-server/handlers/pcs/id/logs/get-pc-logs"
-	"smart-pc-pc-service/internal/http-server/middlewares/request"
+	updatePc "smart-pc-pc-service/internal/http-server/handlers/pcs/id/update-pc"
+	"smart-pc-pc-service/internal/http-server/middlewares/auth"
 	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/commands"
 	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/pcs"
 	"smart-pc-pc-service/internal/storage/postgres"
-	"strings"
 
-	"smart-pc-pc-service/internal/config"
-	getPcs "smart-pc-pc-service/internal/http-server/handlers/pcs/get-pcs"
-	getPc "smart-pc-pc-service/internal/http-server/handlers/pcs/id/get-pc"
-	updatePc "smart-pc-pc-service/internal/http-server/handlers/pcs/id/update-pc"
-	"smart-pc-pc-service/internal/http-server/middlewares/auth"
-	mwLogger "smart-pc-pc-service/internal/http-server/middlewares/logger"
-	"smart-pc-pc-service/internal/lib/logger/sl"
-
+	"github.com/MaxRomanov007/smart-pc-go-lib/logger/sl"
+	"github.com/MaxRomanov007/smart-pc-go-lib/middlewares/logmw"
+	"github.com/MaxRomanov007/smart-pc-go-lib/middlewares/reqmw"
+	jsonTagName "github.com/MaxRomanov007/smart-pc-go-lib/validator/tag-names/json-tag-name"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-playground/validator/v10"
@@ -51,17 +49,11 @@ func New(
 	r.Use(
 		middleware.RequestID,
 		middleware.Recoverer,
-		mwLogger.New(log),
+		logmw.New(log),
 	)
 
 	v := validator.New()
-	v.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
-		if name == "" || name == "-" {
-			return fld.Name
-		}
-		return name
-	})
+	v.RegisterTagNameFunc(jsonTagName.New())
 
 	r.Route(fmt.Sprintf("/u/{%s}/pcs", auth.UIDURLParam), func(r chi.Router) {
 		r.Use(
@@ -71,14 +63,14 @@ func New(
 		)
 
 		r.Get("/", getPcs.New(log, storage.Pcs))
-		r.With(request.New[createPc.Request](log, v)).
+		r.With(reqmw.New[createPc.Request](log, v)).
 			Post("/", createPc.New(log, storage.Pcs))
 
 		r.Route(fmt.Sprintf("/{%s}", pcs.PcIDURLParam), func(r chi.Router) {
-			r.Use(pcs.NewParsePcIDMiddleware(log))
+			r.Use(pcs.NewMiddleware(log))
 
 			r.Get("/", getPc.New(log, storage.Pcs))
-			r.With(request.New[updatePc.Request](log, v)).
+			r.With(reqmw.New[updatePc.Request](log, v)).
 				Patch("/", updatePc.New(log, storage.Pcs))
 			r.Delete("/", deletePc.New(log, storage.Pcs))
 
@@ -88,15 +80,15 @@ func New(
 
 			r.Route("/commands", func(r chi.Router) {
 				r.Get("/", getCommands.New(log, storage.PcCommands))
-				r.With(request.New[createCommand.Request](log, v)).
+				r.With(reqmw.New[createCommand.Request](log, v)).
 					Post("/", createCommand.New(log, storage.PcCommands))
 
 				r.Route(fmt.Sprintf("/{%s}", commands.PcCommandIDURLParam), func(r chi.Router) {
-					r.Use(commands.NewParsePcCommandIDMiddleware(log))
+					r.Use(commands.NewMiddleware(log))
 
 					r.Delete("/", deleteCommand.New(log, storage.PcCommands))
 					r.Get("/parameters", getParameters.New(log, storage.PcCommandParameters))
-					r.With(request.New[updateCommand.Request](log, v)).
+					r.With(reqmw.New[updateCommand.Request](log, v)).
 						Patch("/", updateCommand.New(log, storage.PcCommands))
 				})
 			})

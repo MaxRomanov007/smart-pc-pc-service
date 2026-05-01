@@ -6,12 +6,12 @@ import (
 	"fmt"
 
 	"smart-pc-pc-service/internal/config"
-	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/lib/storage/postgres"
 	"smart-pc-pc-service/internal/lib/strings/slug/slugger"
 	"smart-pc-pc-service/internal/storage"
 	"smart-pc-pc-service/internal/storage/postgres/dbqueries"
 
+	"github.com/MaxRomanov007/smart-pc-go-lib/domain/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )

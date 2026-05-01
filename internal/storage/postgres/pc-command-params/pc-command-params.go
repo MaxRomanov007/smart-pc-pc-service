@@ -2,9 +2,9 @@ package pcCommandParams
 
 import (
 	"context"
-	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/storage/postgres/dbqueries"
 
+	"github.com/MaxRomanov007/smart-pc-go-lib/domain/models"
 	"github.com/google/uuid"
 )
 

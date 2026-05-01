@@ -4,9 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"smart-pc-pc-service/internal/lib/api/response"
-	"smart-pc-pc-service/internal/lib/logger/sl"
-
+	"github.com/MaxRomanov007/smart-pc-go-lib/api/response"
+	"github.com/MaxRomanov007/smart-pc-go-lib/logger/sl"
 	"github.com/go-chi/render"
 )
 

@@ -1,8 +1,8 @@
 package getPcLogs
 
 import (
-	"smart-pc-pc-service/internal/domain/models"
-	"smart-pc-pc-service/internal/lib/api/response/pagination"
+	"github.com/MaxRomanov007/smart-pc-go-lib/api/response/pagination"
+	"github.com/MaxRomanov007/smart-pc-go-lib/domain/models"
 )
 
 type PaginationResult struct {

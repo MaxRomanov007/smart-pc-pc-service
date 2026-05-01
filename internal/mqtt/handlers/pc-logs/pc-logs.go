@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"smart-pc-pc-service/internal/domain/models"
 	"strings"
 	"time"
 
-	"smart-pc-pc-service/internal/lib/logger/sl"
-	"smart-pc-pc-service/internal/lib/mqtt/message"
-
+	"github.com/MaxRomanov007/smart-pc-go-lib/domain/models"
+	mqttMessage "github.com/MaxRomanov007/smart-pc-go-lib/domain/models/mqtt-message"
+	"github.com/MaxRomanov007/smart-pc-go-lib/logger/sl"
 	"github.com/eclipse/paho.golang/paho"
 	"github.com/google/uuid"
 )
@@ -31,9 +30,9 @@ func New(ctx context.Context, log *slog.Logger, creator PcLogCreator) paho.Messa
 	return func(p *paho.Publish) {
 		const op = "mqtt.handlers.pc-logs"
 
-		log := log.With(sl.Op(op), sl.PubID(p))
+		log := log.With(sl.Op(op), sl.MsgID(p))
 
-		payload, err := message.Decode[Message](p)
+		payload, err := mqttMessage.Decode[Message](p)
 		if err != nil {
 			log.Error("failed to decode payload", sl.Err(err))
 			return

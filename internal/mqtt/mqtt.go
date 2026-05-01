@@ -10,8 +10,8 @@ import (
 	"smart-pc-pc-service/internal/storage/postgres"
 
 	"smart-pc-pc-service/internal/config"
-	"smart-pc-pc-service/internal/lib/logger/sl"
 
+	"github.com/MaxRomanov007/smart-pc-go-lib/logger/sl"
 	"github.com/eclipse/paho.golang/autopaho"
 	"github.com/eclipse/paho.golang/paho"
 )

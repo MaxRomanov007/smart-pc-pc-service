@@ -5,15 +5,15 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
-	"smart-pc-pc-service/internal/http-server/middlewares/request"
 	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/commands"
 	"smart-pc-pc-service/internal/http-server/middlewares/uuidmw/pcs"
-	"smart-pc-pc-service/internal/lib/api/response"
-	"smart-pc-pc-service/internal/lib/logger/sl"
 	"smart-pc-pc-service/internal/storage"
 
+	"github.com/MaxRomanov007/smart-pc-go-lib/api/response"
+	"github.com/MaxRomanov007/smart-pc-go-lib/domain/models"
+	"github.com/MaxRomanov007/smart-pc-go-lib/logger/sl"
+	"github.com/MaxRomanov007/smart-pc-go-lib/middlewares/reqmw"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 )
@@ -48,7 +48,7 @@ func New(log *slog.Logger, updater CommandUpdater) http.HandlerFunc {
 		userID := auth.MustUID(r)
 		pcID := pcs.MustPcID(r)
 		commandID := commands.MustPcCommandID(r)
-		req := request.MustGet[Request](r)
+		req := reqmw.MustGet[Request](r)
 
 		var parameters []models.CommandParameter
 		if len(req.Parameters) > 0 {

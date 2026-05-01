@@ -6,11 +6,11 @@ import (
 	"log/slog"
 	"slices"
 	"smart-pc-pc-service/internal/config"
-	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/lib/batcher"
-	"smart-pc-pc-service/internal/lib/logger/sl"
 	"smart-pc-pc-service/internal/storage/postgres/dbqueries"
 
+	"github.com/MaxRomanov007/smart-pc-go-lib/domain/models"
+	"github.com/MaxRomanov007/smart-pc-go-lib/logger/sl"
 	"github.com/google/uuid"
 )
 

@@ -4,15 +4,16 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"smart-pc-pc-service/internal/lib/sync/waitable"
 	"syscall"
 
 	"smart-pc-pc-service/internal/config"
 	httpServer "smart-pc-pc-service/internal/http-server"
 	"smart-pc-pc-service/internal/lib/logger"
-	"smart-pc-pc-service/internal/lib/logger/sl"
 	"smart-pc-pc-service/internal/mqtt"
 	"smart-pc-pc-service/internal/storage/postgres"
+
+	"github.com/MaxRomanov007/smart-pc-go-lib/logger/sl"
+	"github.com/MaxRomanov007/smart-pc-go-lib/waitable"
 )
 
 func main() {

@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"smart-pc-pc-service/internal/domain/models"
+	"smart-pc-pc-service/internal/lib/storage/postgres"
 	"smart-pc-pc-service/internal/storage"
 	"smart-pc-pc-service/internal/storage/postgres/dbqueries"
 
+	"github.com/MaxRomanov007/smart-pc-go-lib/domain/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -51,26 +52,7 @@ func (s *Storage) CreateUserPcCommand(
 	if err != nil {
 		return models.Command{}, fmt.Errorf("%s: failed to begin transaction: %w", op, err)
 	}
-
-	defer func() {
-		if err != nil {
-			rollbackErr := tx.Rollback(ctx)
-			if rollbackErr != nil {
-				err = fmt.Errorf(
-					"%s: failed to rollback (error: %w), after operation failed (error: %w)",
-					op,
-					rollbackErr,
-					err,
-				)
-			}
-			return
-		}
-
-		commitErr := tx.Commit(ctx)
-		if commitErr != nil {
-			err = fmt.Errorf("%s: failed to commit transaction: %w", op, commitErr)
-		}
-	}()
+	defer postgres.FinishTx(ctx, tx, &err)
 
 	queries := dbqueries.New(tx)
 
@@ -145,26 +127,7 @@ func (s *Storage) UpdateUserPcCommand(
 	if err != nil {
 		return models.Command{}, fmt.Errorf("%s: failed to begin transaction: %w", op, err)
 	}
-
-	defer func() {
-		if err != nil {
-			rollbackErr := tx.Rollback(ctx)
-			if rollbackErr != nil {
-				err = fmt.Errorf(
-					"%s: failed to rollback (error: %w), after operation failed (error: %w)",
-					op,
-					rollbackErr,
-					err,
-				)
-			}
-			return
-		}
-
-		commitErr := tx.Commit(ctx)
-		if commitErr != nil {
-			err = fmt.Errorf("%s: failed to commit transaction: %w", op, commitErr)
-		}
-	}()
+	defer postgres.FinishTx(ctx, tx, &err)
 
 	queries := dbqueries.New(tx)
 

@@ -4,12 +4,12 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-	"smart-pc-pc-service/internal/domain/models"
 	"smart-pc-pc-service/internal/http-server/middlewares/auth"
-	"smart-pc-pc-service/internal/http-server/middlewares/request"
-	"smart-pc-pc-service/internal/lib/api/response"
-	"smart-pc-pc-service/internal/lib/logger/sl"
 
+	"github.com/MaxRomanov007/smart-pc-go-lib/api/response"
+	"github.com/MaxRomanov007/smart-pc-go-lib/domain/models"
+	"github.com/MaxRomanov007/smart-pc-go-lib/logger/sl"
+	"github.com/MaxRomanov007/smart-pc-go-lib/middlewares/reqmw"
 	"github.com/go-chi/render"
 )
 
@@ -28,7 +28,7 @@ func New(log *slog.Logger, creator PcCreator) http.HandlerFunc {
 		log := log.With(sl.Op(op), sl.ReqID(r))
 
 		userID := auth.MustUID(r)
-		req := request.MustGet[Request](r)
+		req := reqmw.MustGet[Request](r)
 
 		created, err := creator.CreatePc(r.Context(), models.Pc{
 			UserID:      userID,

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"smart-pc-pc-service/internal/lib/logger/handlers/slogpretty"
+
+	"github.com/MaxRomanov007/smart-pc-go-lib/logger/handlers/slogpretty"
 )
 
 const (
