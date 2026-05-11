@@ -38,7 +38,7 @@ type Slug struct {
 }
 
 type MQTT struct {
-	URL                   string        `yaml:"url"                     env-default:"mqtt://localhost:1883"`
+	URL                   string        `yaml:"url"                     env-default:"mqtt://localhost:1884"`
 	KeepAlive             uint16        `yaml:"keep_alive"              env-default:"20"`
 	SessionExpiryInterval uint32        `yaml:"session_expiry_interval" env-default:"60"`
 	ClientID              string        `yaml:"client_id"               env-default:"smart-pc-pc-service"`

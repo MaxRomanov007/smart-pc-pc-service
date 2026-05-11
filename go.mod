@@ -3,7 +3,7 @@ module smart-pc-pc-service
 go 1.26
 
 require (
-	github.com/MaxRomanov007/smart-pc-go-lib v1.0.6
+	github.com/MaxRomanov007/smart-pc-go-lib v1.0.7
 	github.com/eclipse/paho.golang v0.23.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-chi/render v1.0.3
